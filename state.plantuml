@@ -1,0 +1,772 @@
+@startuml Forecast CSC Commands, Events and Telemetry
+object metadata_name
+object metadata_latitude
+object metadata_longitude
+object metadata_height
+object "metadata_timezone_abbreviation" as metadata_tza
+object "metadata_utc_timeoffset" as metadata_toff_utc
+object "metadata_modelrun_utc" as metadata_mr_utc
+object "metadata_updatetime_utc" as metadata_mr_ut_utc
+object trend_1h_time
+object "trend_1h_temperature" as trend_1h_temp
+object "trend_1h_temperature_spread" as trend_1h_temp_spread
+object trend_1h_precipitation
+object trend_1h_precipitation_spread
+object trend_1h_windspeed
+object trend_1h_windspeed_spread
+object trend_1h_winddirection
+object trend_1h_sealevelpressure
+object trend_1h_relativehumidity
+object trend_1h_ghi_backwards
+object trend_1h_extraterrestialradiation_backwards
+object trend_1h_totalcloudcover
+object trend_1h_totalcloudcover_spread
+object trend_1h_snowfraction
+object trend_1h_pictocode
+object trend_1h_gust
+object trend_1h_lowclouds
+object trend_1h_midclouds
+object trend_1h_hiclouds
+object trend_1h_sunshinetime
+object trend_1h_visibility
+object trend_1h_skintemperature
+object trend_1h_dewpointtemperature
+object trend_1h_precipitation_probability
+object trend_1h_cape
+object trend_1h_liftedindex
+object trend_1h_evapotranspiration
+object trend_1h_referenceevapotranspiration_fao
+object trend_day_time
+object trend_day_pictocode
+object trend_day_temperature_max
+object trend_day_temperature_min
+object trend_day_temperature_mean
+object trend_day_temperature_spread
+object trend_day_precipitation
+object trend_day_precipitation_probablity
+object trend_day_precipitation_spread
+object trend_day_windspeed_max
+object trend_day_windspeed_min
+object trend_day_windspeed_mean
+object trend_day_windspeed_spread
+object trend_day_winddirection
+object trend_day_sealevelpressure_max
+object trend_day_sealevelpressure_min
+object trend_day_sealevelpressure_mean
+object trend_day_relativehumidity_max
+object trend_day_relativehumidity_min
+object trend_day_relativehumidity_mean
+object trend_day_predictability
+object trend_day_predictability_class
+object trend_day_totalcloudcover_max
+object trend_day_totalcloudcover_min
+object trend_day_totalcloudcover_mean
+object trend_day_totalcloudcover_spread
+object trend_day_ghi_total
+object trend_day_extraterrestrialradiation_total
+object trend_day_gust_max
+object trend_day_gust_min
+object trend_day_gust_mean
+object trend_day_lowclouds_max
+object trend_day_lowclouds_min
+object trend_day_lowclouds_mean
+object trend_day_midclouds_max
+object trend_day_midclouds_min
+object trend_day_midclouds_mean
+object trend_day_hiclouds_max
+object trend_day_hiclouds_min
+object trend_day_hiclouds_mean
+object trend_day_sunshinetime
+object trend_day_visibility_max
+object trend_day_visibility_min
+object trend_day_visibility_mean
+object trend_day_skintemperature_max
+object trend_day_skintemperature_min
+object trend_day_skintemperature_mean
+object trend_day_dewpointtemperature_max
+object trend_day_dewpointtemperature_min
+object trend_day_dewpointtemperature_mean
+object trend_day_cape_max
+object trend_day_cape_min
+object trend_day_cape_mean
+object trend_day_liftedindex_max
+object trend_day_liftedindex_min
+object trend_day_liftedindex_mean
+object trend_day_evapotranspiration
+object trend_day_referenceevapotranspiration_fao
+
+map tel_metadata {
+    name *-> metadata_name
+    latitude *-> metadata_latitude
+    longitude *--> metadata_longitude
+    height *--> metadata_height
+    timezone_abbreviation *---> metadata_tza
+    utc_timeoffset *---> metadata_toff_utc
+    modelrun_utc *----> metadata_mr_utc
+    modelrun_updatetime_utc *----> metadata_mr_ut_utc
+}
+
+metadata_name : IDL_Type = string
+metadata_name : Count = 1
+metadata_name : Description = The weatherstation identifier
+metadata_name : Units = unitless
+metadata_name : EFDB_Name = name
+
+metadata_latitude : IDL_Type = float
+metadata_latitude : Count = 1
+metadata_latitude : Description = The weatherstation latitude
+metadata_latitude : Units = deg
+metadata_latitude : EFDB_Name = latitude
+
+metadata_longitude : IDL_Type = float
+metadata_longitude : Count = 1
+metadata_longitude : Description = The weatherstation longitude
+metadata_longitude : Units = deg
+metadata_longitude : EFDB_Name = longitude
+
+metadata_height : IDL_Type = long
+metadata_height : Count = 1
+metadata_height : Description = The weatherstation height
+metadata_height : Units = meter
+metadata_height : EFDB_Name = height
+
+metadata_tza : IDL_Type = string
+metadata_tza : Count = 1
+metadata_tza : Description = The timezone name
+metadata_tza : Units = unitless
+metadata_tza : EFDB_Name = timezone_abbreviation
+
+metadata_toff_utc : IDL_Type = string
+metadata_toff_utc : Count = 1
+metadata_toff_utc : Description = The time offset from UTC
+metadata_toff_utc : Units = unitless
+metadata_toff_utc : EFDB_Name = utc_timeoffset
+
+metadata_mr_utc : IDL_Type = string
+metadata_mr_utc : Count = 1
+metadata_mr_utc : Description = Model run time
+metadata_mr_utc : Units = unitless
+metadata_mr_utc : EFDB_Name = modelrun_utc
+
+metadata_mr_ut_utc : IDL_Type = string
+metadata_mr_ut_utc : Count = 1
+metadata_mr_ut_utc : Description = Last time model updated
+metadata_mr_ut_utc : Units = unitless
+metadata_mr_ut_utc : EFDB_Name = modelrun_updatetime_utc
+
+map tel_trend_1h {
+time *-> trend_1h_time
+temperature *-> trend_1h_temp
+temperature_spread *-> trend_1h_temp_spread
+precipitation *-> trend_1h_precipitation
+precipitation_spread *--> trend_1h_precipitation_spread
+windspeed *--> trend_1h_windspeed
+windspeed_spread *--> trend_1h_windspeed_spread
+wind_direction *--> trend_1h_winddirection
+sea_level_pressure *---> trend_1h_sealevelpressure
+relative_humidity *---> trend_1h_relativehumidity
+ghi_backwards *---> trend_1h_ghi_backwards
+extra_terrestial_radiation_backwards *---> trend_1h_extraterrestialradiation_backwards
+total_cloud_cover *----> trend_1h_totalcloudcover
+total_cloud_cover_spread *----> trend_1h_totalcloudcover_spread
+snow_fraction *----> trend_1h_snowfraction
+pictocode *----> trend_1h_pictocode
+gust *-----> trend_1h_gust
+low_clouds *-----> trend_1h_lowclouds
+mid_clouds *-----> trend_1h_midclouds
+hi_clouds *-----> trend_1h_hiclouds
+sunshine_time *------> trend_1h_sunshinetime
+visibility *------> trend_1h_visibility
+skin_temperature *------> trend_1h_skintemperature
+dew_point_temperature *------> trend_1h_dewpointtemperature
+precipitation_probability *-------> trend_1h_precipitation_probability
+cape *-------> trend_1h_cape
+lifted_index *-------> trend_1h_liftedindex
+evapo_transpiration *-------> trend_1h_evapotranspiration
+reference_evapo_transpiration_fao *--------> trend_1h_referenceevapotranspiration_fao
+}
+
+trend_1h_time : IDL_Type = string
+trend_1h_time : Count = 360
+trend_1h_time : Description = Forecast time
+trend_1h_time : Units = unitless
+trend_1h_time : EFDB_Name = time
+
+trend_1h_temp : IDL_Type = float
+trend_1h_temp : Count = 360
+trend_1h_temp : Description = Forecast temperature
+trend_1h_temp : Units = deg
+trend_1h_temp : EFDB_Name = temperature
+
+trend_1h_temp_spread : IDL_Type = float
+trend_1h_temp_spread : Count = =360
+trend_1h_temp_spread : Description = Forecast temperature spread
+trend_1h_temp_spread : Units = deg
+trend_1h_temp_spread : EFDB_Name = temperature_spread
+
+trend_1h_precipitation : IDL_Type = float
+trend_1h_precipitation : Count = 360
+trend_1h_precipitation : Description = Forecast precipitation
+trend_1h_precipitation : Units = millimeter
+trend_1h_precipitation : EFDB_Name = precipitation
+
+trend_1h_precipitation_spread : IDL_Type = float
+trend_1h_precipitation_spread : Count = 360
+trend_1h_precipitation_spread : Description = forecast precipitation spread
+trend_1h_precipitation_spread : Units = millimeter
+trend_1h_precipitation_spread : EFDB_Name = precipitation_spread
+
+trend_1h_windspeed : IDL_Type = float
+trend_1h_windspeed : Count = 360
+trend_1h_windspeed : Description = forecast windspeed
+trend_1h_windspeed : Units = meter/second
+trend_1h_windspeed : EFDB_Name = windspeed
+
+trend_1h_windspeed_spread : IDL_Type = float
+trend_1h_windspeed_spread : Count = 360
+trend_1h_windspeed_spread : Description = Forecast windspeed spread
+trend_1h_windspeed_spread : Units = meter/second
+trend_1h_windspeed_spread : EFDB_Name = windspeed_spread
+
+trend_1h_winddirection : IDL_Type = long
+trend_1h_winddirection : Count = 360
+trend_1h_winddirection : Description = Forest wind direction
+trend_1h_winddirection : Units = deg
+trend_1h_winddirection : EFDB_Name = wind_direction
+
+trend_1h_sealevelpressure : IDL_Type = long
+trend_1h_sealevelpressure : Count = 360
+trend_1h_sealevelpressure : Description = Forecast sea level pressure
+trend_1h_sealevelpressure : Units = height * pascal
+trend_1h_sealevelpressure : EFDB_Name = sea_level_pressure
+
+trend_1h_relativehumidity : IDL_Type = long
+trend_1h_relativehumidity : Count = 360
+trend_1h_relativehumidity : Description = Forecast realitive humidity
+trend_1h_relativehumidity : Units = pct
+trend_1h_relativehumidity : EFDB_Name = relative_humidity
+
+trend_1h_ghi_backwards : IDL_Type = float
+trend_1h_ghi_backwards : Count = 360
+trend_1h_ghi_backwards : Description = Forecast ghi backwards
+trend_1h_ghi_backwards : Units = watt*hour*meter**2
+trend_1h_ghi_backwards : EFDB_Name = ghi_backwards
+
+trend_1h_extraterrestialradiation_backwards : IDL_Type = float
+trend_1h_extraterrestialradiation_backwards : Count = 360
+trend_1h_extraterrestialradiation_backwards : Description = Forecast extra terrestrial radiation backwards
+trend_1h_extraterrestialradiation_backwards : Units = watt*hour*meter**2
+trend_1h_extraterrestialradiation_backwards : EFDB_Name = extra_terrestial_radiation_backwards
+
+trend_1h_totalcloudcover : IDL_Type = long
+trend_1h_totalcloudcover : Count = 360
+trend_1h_totalcloudcover : Description = Forecast total cloud cover
+trend_1h_totalcloudcover : Units = pct
+trend_1h_totalcloudcover : EFDB_Name = total_cloud_cover
+
+trend_1h_totalcloudcover_spread : IDL_Type = long
+trend_1h_totalcloudcover_spread : Count = 360
+trend_1h_totalcloudcover_spread : Description = Forecast total cloud cover spread
+trend_1h_totalcloudcover_spread : Units = pct
+trend_1h_totalcloudcover_spread : EFDB_Name = total_cloud_cover_spread
+
+trend_1h_snowfraction : IDL_Type = float
+trend_1h_snowfraction : Count = 360
+trend_1h_snowfraction : Description = Forecast snow fraction
+trend_1h_snowfraction : Units = pct
+trend_1h_snowfraction : EFDB_Name = snow_fraction
+
+trend_1h_pictocode : IDL_Type = long
+trend_1h_pictocode : Count = 360
+trend_1h_pictocode : Description = Forecast pictocode
+trend_1h_pictocode : Units = unitless
+trend_1h_pictocode : EFDB_Name = pictocode
+
+trend_1h_gust : IDL_Type = float
+trend_1h_gust : Count = 360
+trend_1h_gust : Description = Forecast gust
+trend_1h_gust : Units = kilometer/hour
+trend_1h_gust : EFDB_Name = gust
+
+trend_1h_lowclouds : IDL_Type = long
+trend_1h_lowclouds : Count = 360
+trend_1h_lowclouds : Description = Forecast low clouds
+trend_1h_lowclouds : Units = pct
+trend_1h_lowclouds : EFDB_Name = low_clouds
+
+trend_1h_midclouds : IDL_Type = long
+trend_1h_midclouds : Count = 360
+trend_1h_midclouds : Description = Forecast mid clouds
+trend_1h_midclouds : Units = pct
+trend_1h_midclouds : EFDB_Name = mid_clouds
+
+trend_1h_hiclouds : IDL_Type = long
+trend_1h_hiclouds : Count = 360
+trend_1h_hiclouds : Description = Forecast high clouds
+trend_1h_hiclouds : Units = pct
+trend_1h_hiclouds : EFDB_Name = high_clouds
+
+trend_1h_sunshinetime : IDL_Type = long
+trend_1h_sunshinetime : Count = 360
+trend_1h_sunshinetime : Description = Forecast sunshine time
+trend_1h_sunshinetime : Units = minute
+trend_1h_sunshinetime : EFDB_Name = sunshine_time
+
+trend_1h_visibility : IDL_Type = long
+trend_1h_visibility : Count = 360
+trend_1h_visibility : Description = Forecast visibility
+trend_1h_visibility : Units = meter
+trend_1h_visibility : EFDB_Name = visibility
+
+trend_1h_skintemperature : IDL_Type = float
+trend_1h_skintemperature : Count = 360
+trend_1h_skintemperature : Description = Forecast skin temperature
+trend_1h_skintemperature : Units = deg
+trend_1h_skintemperature : EFDB_Name = skin_temperature
+
+trend_1h_dewpointtemperature : IDL_Type = float
+trend_1h_dewpointtemperature : Count = 360
+trend_1h_dewpointtemperature : Description = Forecast dew point temperature
+trend_1h_dewpointtemperature : Units = deg
+trend_1h_dewpointtemperature : EFDB_Name = dew_point_temperature
+
+trend_1h_precipitation_probability : IDL_Type = long
+trend_1h_precipitation_probability : Count = 360
+trend_1h_precipitation_probability : Description = Forecast precipitation probability
+trend_1h_precipitation_probability : Units = pct
+trend_1h_precipitation_probability : EFDB_Name = precipitation_probability
+
+trend_1h_cape : IDL_Type = long
+trend_1h_cape : Count = 360
+trend_1h_cape : Description = Forecast cape
+trend_1h_cape : Units = Joule*kilogram
+trend_1h_cape : EFDB_Name = cape
+
+trend_1h_liftedindex : IDL_Type = float
+trend_1h_liftedindex : Count = 360
+trend_1h_liftedindex : Description = forecast lifted index
+trend_1h_liftedindex : Units = unitless
+trend_1h_liftedindex : EFDB_Name = lifted_index
+
+trend_1h_evapotranspiration : IDL_Type = float
+trend_1h_evapotranspiration : Count = 360
+trend_1h_evapotranspiration : Description = Forecast evapotransipiration
+trend_1h_evapotranspiration : Units = unitless
+trend_1h_evapotranspiration : EFDB_Name = evapo_transpiration
+
+trend_1h_referenceevapotranspiration_fao : IDL_Type = float
+trend_1h_referenceevapotranspiration_fao : Count = 360
+trend_1h_referenceevapotranspiration_fao : Description = Forecast reference evaporated transpiration fao
+trend_1h_referenceevapotranspiration_fao : Units = unitless
+trend_1h_referenceevapotranspiration_fao : EFDB_Name = reference_evapo_transpiration_fao
+
+map tel_trend_day {
+    time *-> trend_day_time
+    pictocode *-> trend_day_pictocode
+    temperature_max *-> trend_day_temperature_max
+    temperature_min *-> trend_day_temperature_min
+    temperature_mean *-> trend_day_temperature_mean
+    temperature_spread *-> trend_day_temperature_spread
+    precipitation *--> trend_day_precipitation
+    precipitation_probability *--> trend_day_precipitation_probablity
+    precipitation_spread *--> trend_day_precipitation_spread
+    windspeed_max *--> trend_day_windspeed_max
+    windspeed_min *--> trend_day_windspeed_min
+    windspeed_mean *--> trend_day_windspeed_mean
+    windspeed_spread *---> trend_day_windspeed_spread
+    winddirection *---> trend_day_winddirection
+    sealevelpressure_max *---> trend_day_sealevelpressure_max
+    sealevelpressure_min *---> trend_day_sealevelpressure_min
+    sealevelpressure_mean *---> trend_day_sealevelpressure_mean
+    relative_humidity_max *---> trend_day_relativehumidity_max
+    relative_humidity_min *----> trend_day_relativehumidity_min
+    relative_humidity_mean *----> trend_day_relativehumidity_mean
+    predictability *----> trend_day_predictability
+    predictability_class *----> trend_day_predictability_class
+    total_cloud_cover_max *----> trend_day_totalcloudcover_max
+    total_cloud_cover_min *----> trend_day_totalcloudcover_min
+    total_cloud_cover_mean *-----> trend_day_totalcloudcover_mean
+    total_cloud_cover_spread *-----> trend_day_totalcloudcover_spread
+    ghi_total *-----> trend_day_ghi_total
+    extra_terrestial_radiation_total *-----> trend_day_extraterrestrialradiation_total
+    gust_max *-----> trend_day_gust_max
+    gust_min *-----> trend_day_gust_min
+    gust_mean *------> trend_day_gust_mean
+    lowclouds_max *------> trend_day_lowclouds_max
+    lowclouds_min *------> trend_day_lowclouds_min
+    lowclouds_mean *------> trend_day_lowclouds_mean
+    midclouds_max *------> trend_day_midclouds_max
+    midclouds_min *------> trend_day_midclouds_min
+    midclouds_mean *-------> trend_day_midclouds_mean
+    hiclouds_max *-------> trend_day_hiclouds_max
+    hiclouds_min *-------> trend_day_hiclouds_min
+    hiclouds_mean *-------> trend_day_hiclouds_mean
+    sunshine_time *-------> trend_day_sunshinetime
+    visibility_max *-------> trend_day_visibility_max
+    visibility_min *--------> trend_day_visibility_min
+    visibility_mean *--------> trend_day_visibility_mean
+    skin_temperature_max *--------> trend_day_skintemperature_max
+    skin_temperature_min *--------> trend_day_skintemperature_min
+    skin_temperature_mean *--------> trend_day_skintemperature_mean
+    dew_point_temperature_max *--------> trend_day_dewpointtemperature_max
+    dew_point_temperature_min *---------> trend_day_dewpointtemperature_min
+    dew_point_temperature_mean *---------> trend_day_temperature_mean
+    cape_max *---------> trend_day_cape_max
+    cape_min *---------> trend_day_cape_min
+    cape_mean *---------> trend_day_cape_mean
+    lifted_index_max *----------> trend_day_liftedindex_max
+    lifted_index_min *----------> trend_day_liftedindex_min
+    lifted_index_mean *----------> trend_day_liftedindex_mean
+    evapo_transpiration *----------> trend_day_evapotranspiration
+    reference_evapo_transpiration_fao *----------> trend_day_referenceevapotranspiration_fao
+}
+
+trend_day_time : IDL_Type = string
+trend_day_time : Count = 14
+trend_day_time : Description = Forecast time
+trend_day_time : Units = unitless
+trend_day_time : EFDB_Name = time
+
+trend_day_pictocode : IDL_Type = long
+trend_day_pictocode : Count = 14
+trend_day_pictocode : Description = Forecast pictocode
+trend_day_pictocode : Units = unitless
+trend_day_pictocode : EFDB_Name = pictocode
+
+trend_day_temperature_max : IDL_Type = float
+trend_day_temperature_max : Count = 14
+trend_day_temperature_max : Description = Forecast max temperature
+trend_day_temperature_max : Units = deg
+trend_day_temperature_max : EFDB_Name = temperature_max
+
+trend_day_temperature_min : IDL_Type = float
+trend_day_temperature_min : Count = 14
+trend_day_temperature_min : Description = Forecast min temperature
+trend_day_temperature_min : Units = deg
+trend_day_temperature_min : EFDB_Name = temperature_min
+
+trend_day_temperature_mean : IDL_Type = float
+trend_day_temperature_mean : Count = 14
+trend_day_temperature_mean : Description = Forecast mean temperature
+trend_day_temperature_mean : Units = deg
+trend_day_temperature_mean : EFDB_Name = temperature_mean
+
+trend_day_temperature_spread : IDL_Type = float
+trend_day_temperature_spread : Count = 14
+trend_day_temperature_spread : Description = Forecast temperature spread
+trend_day_temperature_spread : Units = deg
+trend_day_temperature_spread : EFDB_Name = temperature_spread
+
+trend_day_precipitation : IDL_Type = float
+trend_day_precipitation : Count = 14
+trend_day_precipitation : Description = Forecast precipitation.
+trend_day_precipitation : Units = millimeter
+trend_day_precipitation : EFDB_Name = precipitation
+
+trend_day_precipitation_probablity : IDL_Type = long
+trend_day_precipitation_probablity : Count = 14
+trend_day_precipitation_probablity : Description = Forecast precipitation probablity
+trend_day_precipitation_probablity : Units = pct
+trend_day_precipitation_probablity : EFDB_Name = precipitation_probability
+
+trend_day_precipitation_spread : IDL_Type = float
+trend_day_precipitation_spread : Count = 14
+trend_day_precipitation_spread : Description = Forecast precipitation spread
+trend_day_precipitation_spread : Units = millimeter
+trend_day_precipitation_spread : EFDB_Name = precipitation_spread
+
+trend_day_windspeed_max : IDL_Type = float
+trend_day_windspeed_max : Count = 14
+trend_day_windspeed_max : Description = Forecast windspeed max
+trend_day_windspeed_max : Units = meter/second
+trend_day_windspeed_max : EFDB_Name = windspeed_max
+
+trend_day_windspeed_min : IDL_Type = float
+trend_day_windspeed_min : Count = 14
+trend_day_windspeed_min : Description Forecast min windspeed
+trend_day_windspeed_min : Units = meter/second
+trend_day_windspeed_min : EFDB_Name = windspeed_min
+
+trend_day_windspeed_mean : IDL_Type = float
+trend_day_windspeed_mean : Count = 14
+trend_day_windspeed_mean : Description = Forecast mean windspeed
+trend_day_windspeed_mean : Units = meter/second
+trend_day_windspeed_mean : EFDB_Name = windspeed_mean
+
+trend_day_windspeed_spread : IDL_Type = float
+trend_day_windspeed_spread : Count = 14
+trend_day_windspeed_spread : Description = Forecast windspeed spread
+trend_day_windspeed_spread : Units = meter/second
+trend_day_windspeed_spread : EFDB_Name = windspeed_spread
+
+trend_day_winddirection : IDL_Type = long
+trend_day_winddirection : Count = 14
+trend_day_winddirection : Description = Forecast wind direction
+trend_day_winddirection : Units = deg
+trend_day_winddirection : EFDB_Name = wind_direction
+
+trend_day_sealevelpressure_max : IDL_Type = long
+trend_day_sealevelpressure_max : Count = 14
+trend_day_sealevelpressure_max : Description = Forecast maximum sea level pressure
+trend_day_sealevelpressure_max : Units = bar
+trend_day_sealevelpressure_max : EFDB_Name = sea_level_pressure_max
+
+trend_day_sealevelpressure_min : IDL_Type = long
+trend_day_sealevelpressure_min : Count = 14
+trend_day_sealevelpressure_min : Description = Forecast minimum sea level pressure
+trend_day_sealevelpressure_min : Units = bar
+trend_day_sealevelpressure_min : EFDB_Name = sea_level_pressure_min
+
+trend_day_sealevelpressure_mean : IDL_Type = long
+trend_day_sealevelpressure_mean : Count = 14
+trend_day_sealevelpressure_mean : Description = Forecast mean sea level pressure
+trend_day_sealevelpressure_mean : Units = bar
+trend_day_sealevelpressure_mean : EFDB_Name = sea_level_pressure_mean
+
+trend_day_relativehumidity_max : IDL_Type = long
+trend_day_relativehumidity_max : Count = 14
+trend_day_relativehumidity_max : Description = Forecast maximum relative humidity
+trend_day_relativehumidity_max : Units = pct
+trend_day_relativehumidity_max : EFDB_Name = relative_humidity_max
+
+trend_day_relativehumidity_min : IDL_Type = long
+trend_day_relativehumidity_min : Count = 14
+trend_day_relativehumidity_min : Description = Forecast minimum relative humidity
+trend_day_relativehumidity_min : Units = pct
+trend_day_relativehumidity_min : EFDB_Name = relative_humidity_min
+
+trend_day_relativehumidity_mean : IDL_Type = long
+trend_day_relativehumidity_mean : Count = 14
+trend_day_relativehumidity_mean : Description = Forecast mean relative humidity
+trend_day_relativehumidity_mean : Units = pct
+trend_day_relativehumidity_mean : EFDB_Name = relativehumidity_mean
+
+trend_day_predictability : IDL_Type = long
+trend_day_predictability : Count = 14
+trend_day_predictability : Description = Forecast predictability
+trend_day_predictability : Units = pct
+trend_day_predictability : EFDB_Name = predictability
+
+trend_day_predictability_class : IDL_Type = long
+trend_day_predictability_class : Count = 14
+trend_day_predictability_class : Description = Forecast predictability class
+trend_day_predictability_class : Units = unitless
+trend_day_predictability_class : EFDB_Name = predictability_class
+
+trend_day_totalcloudcover_max : IDL_Type = long
+trend_day_totalcloudcover_max : Count = 14
+trend_day_totalcloudcover_max : Description = Forecast maximum total cloud cover
+trend_day_totalcloudcover_max : Units = pct
+trend_day_totalcloudcover_max : EFDB_Name = totalcloudcover_max
+
+trend_day_totalcloudcover_min : IDL_Type = long
+trend_day_totalcloudcover_min : Count = 14
+trend_day_totalcloudcover_min : Description = Forecast minimum total cloud cover
+trend_day_totalcloudcover_min : Units = pct
+trend_day_totalcloudcover_min : EFDB_Name = totalcloudcover_min
+
+trend_day_totalcloudcover_mean : IDL_Type = long
+trend_day_totalcloudcover_mean : Count = 14
+trend_day_totalcloudcover_mean : Description = Forecast mean total cloud cover
+trend_day_totalcloudcover_mean : Units = pct
+trend_day_totalcloudcover_mean : EFDB_Name = totalcloudcover_mean
+
+trend_day_totalcloudcover_spread : IDL_Type = long
+trend_day_totalcloudcover_spread : Count = 14
+trend_day_totalcloudcover_spread : Description = Forecast spread total cloud cover
+trend_day_totalcloudcover_spread : Units = pct
+trend_day_totalcloudcover_spread : EFDB_Name = totalcloudcover_spread
+
+trend_day_ghi_total : IDL_Type = long
+trend_day_ghi_total : Count = 14
+trend_day_ghi_total : Description = Forecast ghi total
+trend_day_ghi_total : Units = watt*hour/minute^2
+trend_day_ghi_total : EFDB_Name = ghi_total
+
+trend_day_extraterrestrialradiation_total : IDL_Type = long
+trend_day_extraterrestrialradiation_total : Count = 14
+trend_day_extraterrestrialradiation_total : Description = Forecast total extra terrestrial radiation
+trend_day_extraterrestrialradiation_total : Units = watt*hour/minute^2
+trend_day_extraterrestrialradiation_total : EFDB_Name = extraterrestrialradiation_total
+
+trend_day_gust_max : IDL_Type = float
+trend_day_gust_max : Count = 14
+trend_day_gust_max : Description = Forecast maximum gust
+trend_day_gust_max : Units = meter/second
+trend_day_gust_max : EFDB_Name = gust_max
+
+trend_day_gust_min : IDL_Type = float
+trend_day_gust_min : Count = 14
+trend_day_gust_min : Description = Forecast minimum gust
+trend_day_gust_min : Units = meter/second
+trend_day_gust_min : EFDB_Name = gust_min
+
+trend_day_gust_mean : IDL_Type = float
+trend_day_gust_mean : Count = 14
+trend_day_gust_mean : Description = Forecast mean gust
+trend_day_gust_mean : Units = meter/second
+trend_day_gust_mean : EFDB_Name = gust_mean
+
+trend_day_lowclouds_max : IDL_Type = long
+trend_day_lowclouds_max : Count = 14
+trend_day_lowclouds_max : Description = Forecast maximum low clouds
+trend_day_lowclouds_max : Units = pct
+trend_day_lowclouds_max : EFDB_Name = lowclouds_max
+
+trend_day_lowclouds_min : IDL_Type = long
+trend_day_lowclouds_min : Count = 14
+trend_day_lowclouds_min : Description = Forecast minimum low clouds
+trend_day_lowclouds_min : Units = pct
+trend_day_lowclouds_min : EFDB_Name = lowclouds_min
+
+trend_day_lowclouds_mean : IDL_Type = long
+trend_day_lowclouds_mean : Count = 14
+trend_day_lowclouds_mean : Description = Forecast mean low clouds
+trend_day_lowclouds_mean : Units = pct
+trend_day_lowclouds_mean : EFDB_Name = lowclouds_mean
+
+trend_day_midclouds_max : IDL_Type = long
+trend_day_midclouds_max : Count = 14
+trend_day_midclouds_max : Description = Forecast maximum mid clouds
+trend_day_midclouds_max : Units = pct
+trend_day_midclouds_max : EFDB_Name = midclouds_max
+
+trend_day_midclouds_min : IDL_Type = long
+trend_day_midclouds_min : Count = 14
+trend_day_midclouds_min : Description = Forecast minimum mid clouds
+trend_day_midclouds_min : Units = pct
+trend_day_midclouds_min : EFDB_Name = midclouds_min
+
+trend_day_midclouds_mean : IDL_Type = long
+trend_day_midclouds_mean : Count = 14
+trend_day_midclouds_mean : Description = Forecast mean mid clouds
+trend_day_midclouds_mean : Units = pct
+trend_day_midclouds_mean : EFDB_Name = midclouds_mean
+
+trend_day_hiclouds_max : IDL_Type = long
+trend_day_hiclouds_max : Count = 14
+trend_day_hiclouds_max : Description = Forecast maximum high clouds
+trend_day_hiclouds_max : Units = pct
+trend_day_hiclouds_max : EFDB_Name = hiclouds_max
+
+trend_day_hiclouds_min : IDL_Type = long
+trend_day_hiclouds_min : Count = 14
+trend_day_hiclouds_min : Description = Forecast minimum high clouds
+trend_day_hiclouds_min : Units = pct
+trend_day_hiclouds_min : EFDB_Name = hiclouds_min
+
+trend_day_hiclouds_mean : IDL_Type = long
+trend_day_hiclouds_mean : Count = 14
+trend_day_hiclouds_mean : Description = Forecast mean high clouds
+trend_day_hiclouds_mean : Units = pct
+trend_day_hiclouds_mean : EFDB_Name = hiclouds_mean
+
+trend_day_sunshinetime : IDL_Type = long
+trend_day_sunshinetime : Count = 14
+trend_day_sunshinetime : Description = Forecast sunshine time
+trend_day_sunshinetime : Units = unitless
+trend_day_sunshinetime : EFDB_Name = sunshinetime
+
+trend_day_visibility_max : IDL_Type = long
+trend_day_visibility_max : Count = 14
+trend_day_visibility_max : Description = Forecast maximum visibility
+trend_day_visibility_max : Units = meter
+trend_day_visibility_max : EFDB_Name = visibility_max
+
+trend_day_visibility_min : IDL_Type = long
+trend_day_visibility_min : Count = 14
+trend_day_visibility_min : Description = Forecast minimum visibility
+trend_day_visibility_min : Units = meter
+trend_day_visibility_min : EFDB_Name = visibility_min
+
+trend_day_visibility_mean : IDL_Type = long
+trend_day_visibility_mean : Count = 14
+trend_day_visibility_mean : Description = Forecast mean visibility
+trend_day_visibility_mean : Units = meter
+trend_day_visibility_mean : EFDB_Name = visibility_mean
+
+trend_day_skintemperature_max : IDL_Type = float
+trend_day_skintemperature_max : Count = 14
+trend_day_skintemperature_max : Description = Forecast maximum skin temperature
+trend_day_skintemperature_max : Units = deg
+trend_day_skintemperature_max : EFDB_Name = skintemperature_max
+
+trend_day_skintemperature_min : IDL_Type = float
+trend_day_skintemperature_min : Count = 14
+trend_day_skintemperature_min : Description = Forecast minimum skin temperature
+trend_day_skintemperature_min : Units = deg
+trend_day_skintemperature_min : EFDB_Name = skintemperature_min
+
+trend_day_skintemperature_mean : IDL_Type = float
+trend_day_skintemperature_mean : Count = 14
+trend_day_skintemperature_mean : Description = Forecast mean skin temperature
+trend_day_skintemperature_mean : Units = deg
+trend_day_skintemperature_mean : EFDB_Name = skintemperature_mean
+
+trend_day_dewpointtemperature_max : IDL_Type = float
+trend_day_dewpointtemperature_max : Count = 14
+trend_day_dewpointtemperature_max : Description = Forecast maximum dew point temperature
+trend_day_dewpointtemperature_max : Units = deg
+trend_day_dewpointtemperature_max : EFDB_Name = dewpointtemperature_max
+
+trend_day_dewpointtemperature_min : IDL_Type = float
+trend_day_dewpointtemperature_min : Count = 14
+trend_day_dewpointtemperature_min : Description = Forecast minimum dew point temperature
+trend_day_dewpointtemperature_min : Units = deg
+trend_day_dewpointtemperature_min : EFDB_Name = dewpointtemperature_min
+
+trend_day_dewpointtemperature_mean : IDL_Type = float
+trend_day_dewpointtemperature_mean : Count = 14
+trend_day_dewpointtemperature_mean : Description = Forecast mean dew point temperature
+trend_day_dewpointtemperature_mean : Units = deg
+trend_day_dewpointtemperature_mean : EFDB_Name = dewpointtemperature_mean
+
+trend_day_cape_max : IDL_Type = long
+trend_day_cape_max : Count = 14
+trend_day_cape_max : Description = Forecast maximum cape
+trend_day_cape_max : Units = unitless
+trend_day_cape_max : EFDB_Name = cape_max
+
+trend_day_cape_min : IDL_Type = long
+trend_day_cape_min : Count = 14
+trend_day_cape_min : Description = Forecast minimum cape
+trend_day_cape_min : Units = unitless
+trend_day_cape_min : EFDB_Name = cape_min
+
+trend_day_cape_mean : IDL_Type = long
+trend_day_cape_mean : Count = 14
+trend_day_cape_mean : Description = Forecast mean cape
+trend_day_cape_mean : Units = unitless
+trend_day_cape_mean : EFDB_Name = cape_mean
+
+trend_day_liftedindex_max : IDL_Type = float
+trend_day_liftedindex_max : Count = 14
+trend_day_liftedindex_max : Description = Forecast maximum lifted index
+trend_day_liftedindex_max : Units = unitless
+trend_day_liftedindex_max : EFDB_Name = liftedindex_max
+
+trend_day_liftedindex_min : IDL_Type = float
+trend_day_liftedindex_min : Count = 14
+trend_day_liftedindex_min : Description = Forecast minimum lifted index
+trend_day_liftedindex_min : Units = unitless
+trend_day_liftedindex_min : EFDB_Name = liftedindex_min
+
+trend_day_liftedindex_mean : IDL_Type = float
+trend_day_liftedindex_mean : Count = 14
+trend_day_liftedindex_mean : Description = Forecast mean lifted index
+trend_day_liftedindex_mean : Units = unitless
+trend_day_liftedindex_mean : EFDB_Name = liftedindex_mean
+
+trend_day_evapotranspiration : IDL_Type = float
+trend_day_evapotranspiration : Count = 14
+trend_day_evapotranspiration : Description = Forecast evapotranspiration
+trend_day_evapotranspiration : Units = millimeter
+trend_day_evapotranspiration : EFDB_Name = evapo_transpiration
+
+trend_day_referenceevapotranspiration_fao : IDL_Type = float
+trend_day_referenceevapotranspiration_fao : Count = 14
+trend_day_referenceevapotranspiration_fao : Description = Forecast reference evapotranspiration
+trend_day_referenceevapotranspiration_fao : Units = millimeter
+trend_day_referenceevapotranspiration_fao : EFDB_Name = reference_evapo_transpiration_fao
+
+@enduml

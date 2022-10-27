@@ -1,0 +1,10 @@
+@startuml
+[*] --> Standby
+Standby --> Disabled : start
+Disabled --> Enabled : enable
+Enabled --> Fault : fault
+Fault --> Standby : standby
+Enabled --> Disabled : disable
+Disabled --> Standby : standby
+Standby --> [*] : exitControl
+@enduml

@@ -10,8 +10,6 @@ Version History
 .. No new work should be required in order to complete this section.
 .. Below is an example of a version history format.
 
-v0.4.1
+v0.1.0
 ------
-* Added Jenkinsfile for conda recipe
-* Added conda recipe
-* Incorporated new offset parameters with the option of them being persistent (sticky)
+* Inital release

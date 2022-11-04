@@ -9,6 +9,9 @@ readme = "README.rst"
 urls = { documentation = "https://ts-weatherforecast.lsst.io", source_code = "https://github.com/lsst-ts/ts_weatherforecast"}
 dynamic = ["version"]
 
+[tool.setuptools]
+package-data = { "" = "*.json"}
+
 [tool.setuptools.dynamic]
 version = { attr = "setuptools_scm.get_version" }
 
@@ -27,7 +30,7 @@ __version__ = "{version}"
 """
 
 [tool.pytest.ini_options]
-addopts = "--flake8 --black"
+addopts = "--flake8 --black --ignore-glob=*/version.py"
 flake8-ignore = ["E133", "E203", "E226", "E228", "N802", "N803", "N806", "N812", "N813", "N815", "N816", "W503", "doc/conf.py ALL", "__init__.py ALL", "version.py ALL", "tests/.tests ALL"]
 log_level = "DEBUG"
 asyncio_mode = "auto"
@@ -35,7 +38,7 @@ flake8-max-line-length = "110"
 flake8-max-doc-length = "79"
 
 [project.optional-dependencies]
-dev = ["pytest", "black", "flakeheaven", "pytest-flake8", "pytest-black"]
+dev = ["pytest", "black", "flakeheaven", "pytest-flake8", "pytest-black", "isort"]
 
 [tool.flakeheaven]
 exclude = ["__init__.py", "doc/*.py", "version.py", "tests/.tests"]
@@ -45,3 +48,7 @@ max_doc_line_length = 79
 [tool.flakeheaven.plugins]
 pycodestyle = ["+*", "-E133", "-E203", "-E226", "-E228", "-W503"]
 pep8-naming = ["+*", "-N802", "-N803", "-N806", "-N812", "-N813", "-N815", "-N816"]
+
+[tool.isort]
+profile = "black"
+skip = ["__init__.py"]

@@ -166,3 +166,4 @@ cython_debug/
 .tests
 .sconf_temp
 _build
+py-api

@@ -62,9 +62,9 @@ WeatherForecast
 Overview
 ========
 
-[This section is to present an overview of the CSC.
-This should include a top-level description of the primary use-case(s) as well as any pertinent information.
-Example information may be link(s) to the higher-level classes which may be used to operate it, or mention of other CSCs (with links) that it operates in concert with.]
+The WeatherForecast Commandable SAL Component provides forecast information for telescope operations using the MeteoBlue Forecast API.
+It is primarily for LOVE to display forecast information as desired.
+Telemetry will be published every 12 hours or twice a day.
 
 As with all CSCs, information on the package, developers and product owners can be found in the `Master CSC Table <ts_xml:index:master-csc-table:WeatherForecast>`_.
 

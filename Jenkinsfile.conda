@@ -1,2 +1,2 @@
 @Library('JenkinsShared')_
-CondaPipeline([], "ts_weatherforecast", "lsst.ts.weatherforecast")
+CondaPipeline([], "ts-weatherforecast", "lsst.ts.weatherforecast", "noarch")

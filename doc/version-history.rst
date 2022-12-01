@@ -4,12 +4,19 @@
 Version History
 ===============
 
-.. At the time of writing the Version history/release notes are not yet standardized amongst CSCs.
-.. Until then, it is not expected that both a version history and a release_notes be maintained.
-.. It is expected that each CSC link to whatever method of tracking is being used for that CSC until standardization occurs.
-.. No new work should be required in order to complete this section.
-.. Below is an example of a version history format.
+v0.1.1
+======
+
+* Fix the conda build.
+
+Requires:
+
+* ts_salobj 7.0
+* ts_idl 3.1
+* ts_utils 1.0
+* IDL files for WeatherForecast from ts_xml 13.0
 
 v0.1.0
-------
+======
+
 * Inital release

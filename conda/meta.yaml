@@ -16,7 +16,6 @@ build:
         - PYTHON_BUILD_VERSION
         - PYTHON_BUILD_LOCATION
         - LSST_DDS_DOMAIN
-        # Replace with csc configuration repo directory, i.e. TS_CONFIG_ATTCS_DIR for athexapod
 
 test:
     requires:
@@ -24,12 +23,11 @@ test:
         - ts-dds
         - ts-idl {{ idl_version }}
         - ts-salobj {{ salobj_version }}
+        - aiohttp
     source_files:
         - python
-        - bin
         - tests
-        - schema
-        - setup.cfg
+        - pyproject.toml
     commands:
         - pytest
 
@@ -40,11 +38,13 @@ requirements:
         - setuptools_scm
         - setuptools
     build:
-      - python {{ python }}
-      - setuptools_scm
-      - setuptools
-      - ts-conda-build =0.3
+        - python {{ python }}
+        - setuptools_scm
+        - setuptools
+        - ts-conda-build =0.3
+        - aiohttp
     run:
         - python {{ python }}
         - ts-salobj
         - ts-idl
+        - aiohttp

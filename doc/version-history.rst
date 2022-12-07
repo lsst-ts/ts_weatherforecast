@@ -4,6 +4,11 @@
 Version History
 ===============
 
+v0.1.4
+======
+* Add missing execute_csc function to csc module
+* Add missing bin folder and run_weatherforecast script
+
 v0.1.3
 ======
 

@@ -19,7 +19,7 @@ version = { attr = "setuptools_scm.get_version" }
 where = [ "python" ]
 
 [project.scripts]
-run_weatherforecast = "lsst.ts.weatherforecast.csc:execute_csc"
+run_weatherforecast = "lsst.ts.weatherforecast:execute_csc"
 
 [tool.setuptools_scm]
 write_to = "python/lsst/ts/weatherforecast/version.py"

@@ -45,6 +45,11 @@ class WeatherForecastCSCTestCase(
             initial_state=initial_state, simulation_mode=simulation_mode
         )
 
+    async def test_bin_script(self):
+        await self.check_bin_script(
+            name="WeatherForecast", index=False, exe_name="run_weatherforecast"
+        )
+
     async def test_telemetry(self):
         test_file = pathlib.Path(
             "python/lsst/ts/weatherforecast/data/forecast-test.json"

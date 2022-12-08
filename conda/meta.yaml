@@ -8,6 +8,8 @@ source:
 
 build:
     noarch: generic
+    entry_points:
+      - run_weatherforecast = lsst.ts.weatherforecast:execute_csc
     script: {{ PYTHON }} -m pip install --no-deps --ignore-installed .
     script_env:
         - PATH

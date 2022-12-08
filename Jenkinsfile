@@ -79,7 +79,7 @@ pipeline {
                 withEnv(["WHOME=${env.WORKSPACE}"]) {
                     sh """
                         source /home/saluser/.setup_dev.sh || echo "Loading env failed; continuing..."
-                        setup -r .
+                        setup -kr .
                         pytest --cov-report html --cov=${env.MODULE_NAME} --junitxml=${env.XML_REPORT_PATH}
                     """
                 }
@@ -90,7 +90,7 @@ pipeline {
                 withEnv(["WHOME=${env.WORKSPACE}"]) {
                     sh """
                         source /home/saluser/.setup_dev.sh || echo "Loading env failed; continuing..."
-                        setup -r .
+                        setup -kr .
                         package-docs build
                     """
                 }
@@ -102,7 +102,7 @@ pipeline {
                     catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
                         sh '''
                             source /home/saluser/.setup_dev.sh || echo "Loading env failed; continuing..."
-                            setup -r .
+                            setup -kr .
                             ltd -u ${LSST_IO_CREDS_USR} -p ${LSST_IO_CREDS_PSW} upload \
                                 --product ${DOC_PRODUCT_NAME} --git-ref ${GIT_BRANCH} --dir doc/_build/html
                         '''

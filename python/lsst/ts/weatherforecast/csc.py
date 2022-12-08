@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-__all__ = ["WeatherForecastCSC"]
+__all__ = ["WeatherForecastCSC", "execute_csc"]
 
 import asyncio
 import datetime
@@ -40,6 +40,11 @@ ELEVATION = 2925
 TIMEZONE = "America/Santiago"
 SITE_URL = "https://my.meteoblue.com/packages/trend-1h"
 FORMAT = "json"
+
+
+def execute_csc():
+    """Execute the CSC."""
+    asyncio.run(WeatherForecastCSC.amain(index=False))
 
 
 class WeatherForecastCSC(salobj.BaseCsc):

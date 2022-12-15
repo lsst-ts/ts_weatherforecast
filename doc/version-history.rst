@@ -4,6 +4,11 @@
 Version History
 ===============
 
+v0.2.0
+======
+* Add MockServer
+* Fix SITE_URL constant
+
 v0.1.4
 ======
 * Add missing execute_csc function to csc module

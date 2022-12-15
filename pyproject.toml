@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptool>=45", "setuptools-scm[toml]>=6.2"]
+requires = ["setuptools>=45", "setuptools-scm[toml]>=6.2"]
 
 [project]
 name = "ts-weatherforecast"

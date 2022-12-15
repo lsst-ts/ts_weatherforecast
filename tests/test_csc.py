@@ -36,6 +36,7 @@ class WeatherForecastCSCTestCase(
     def setUp(self):
         """Setup the test with LSST_SITE environment value"""
         os.environ["LSST_SITE"] = "weatherforecast"
+        os.environ["METEOBLUE_API_KEY"] = "test"
         return super().setUp()
 
     def basic_make_csc(
@@ -55,7 +56,7 @@ class WeatherForecastCSCTestCase(
             "python/lsst/ts/weatherforecast/data/forecast-test.json"
         )
         async with self.make_csc(initial_state=salobj.State.ENABLED, simulation_mode=1):
-            metadata = await self.remote.tel_metadata.aget()
+            metadata = await self.remote.tel_metadata.aget(timeout=10)
             assert approx(-30.24) == metadata.latitude
             assert approx(-70.34) == metadata.longitude
             assert 2298 == metadata.height

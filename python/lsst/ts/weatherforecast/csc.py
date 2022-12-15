@@ -76,9 +76,7 @@ async def make_app():
         The app containing routes.
     """
     app = web.Application()
-    app.add_routes(
-        [web.get("/packages/trend-1h/packages/trendpro-1h_trendpro-day", get_forecast)]
-    )
+    app.add_routes([web.get("/packages/trendpro-1h_trendpro-day", get_forecast)])
     return app
 
 
@@ -182,7 +180,7 @@ class WeatherForecastCSC(salobj.BaseCsc):
                 SITE_URL, raise_for_status=True
             ) as session:
                 async with session.get(
-                    "/packages/trend-1h/packages/trendpro-1h_trendpro-day",
+                    "/packages/trendpro-1h_trendpro-day",
                     params=params,
                 ) as resp:
                     self.log.info("Session gotten.")

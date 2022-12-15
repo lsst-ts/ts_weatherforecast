@@ -6,8 +6,9 @@ Version History
 
 v0.2.0
 ======
-* Add MockServer
-* Fix SITE_URL constant
+* Add MockServer.
+* Fix SITE_URL constant.
+* Make enable_cmdline_state true.
 
 v0.1.4
 ======

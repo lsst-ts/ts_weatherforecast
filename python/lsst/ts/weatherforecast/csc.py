@@ -138,6 +138,7 @@ class WeatherForecastCSC(salobj.BaseCsc):
 
     valid_simulation_modes = [0, 1]
     version = __version__
+    enable_cmdline_state = True
 
     def __init__(self, initial_state=salobj.State.STANDBY, simulation_mode=0) -> None:
         super().__init__(

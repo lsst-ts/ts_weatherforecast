@@ -174,6 +174,7 @@ class WeatherForecastCSC(salobj.BaseCsc):
         """
         try:
             if self.simulation_mode:
+                global SITE_URL
                 SITE_URL = "http://127.0.0.1:8080"
             self.log.info(f"{SITE_URL=}, {LATITUDE=}, {LONGITUDE=}, {API_KEY=}")
             params = {"lat": LATITUDE, "lon": LONGITUDE, "apikey": API_KEY}

@@ -29,22 +29,84 @@ import os
 import pathlib
 
 import aiohttp
+from aiohttp import web
 from lsst.ts import salobj, utils
 
 from . import __version__
 
-API_KEY = os.getenv("METEOBLUE_API_KEY")
+API_KEY = os.getenv("METEOBLUE_API_KEY", "")
 LATITUDE = -30.24
 LONGITUDE = -70.336
 ELEVATION = 2925
 TIMEZONE = "America/Santiago"
-SITE_URL = "https://my.meteoblue.com/packages/trend-1h"
+SITE_URL = "https://my.meteoblue.com"
 FORMAT = "json"
 
 
 def execute_csc():
     """Execute the CSC."""
     asyncio.run(WeatherForecastCSC.amain(index=False))
+
+
+async def get_forecast(request):
+    """Return a json str that gives forecast information.
+
+    Parameters
+    ----------
+    request : `web.Request`
+        The request containing url parameters and data.
+
+    Returns
+    -------
+    web.Response
+        The json str response.
+    """
+    test_file = pathlib.Path("python/lsst/ts/weatherforecast/data/forecast-test.json")
+    with open(test_file) as f:
+        df = json.load(f)
+    return web.json_response(df)
+
+
+async def make_app():
+    """Make the application with routes.
+
+    Returns
+    -------
+    app : `web.Application`
+        The app containing routes.
+    """
+    app = web.Application()
+    app.add_routes(
+        [web.get("/packages/trend-1h/packages/trendpro-1h_trendpro-day", get_forecast)]
+    )
+    return app
+
+
+async def start_server():
+    """Start the server.
+
+    Returns
+    -------
+    runner : `web.AppRunner`
+        Tracks the state of the application.
+    """
+    app = await make_app()
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, "127.0.0.1", 8080)
+    await site.start()
+    return runner
+
+
+async def stop_server(runner):
+    """Stop the server.
+
+    Parameters
+    ----------
+    runner : `web.AppRunner`
+        The runner to cleanup.
+    """
+    await runner.cleanup()
 
 
 class WeatherForecastCSC(salobj.BaseCsc):
@@ -70,6 +132,8 @@ class WeatherForecastCSC(salobj.BaseCsc):
         The last time that the forecast was updated. (UTC)
     interval : `int`
         The interval at which the telemetry loop is run. (Seconds)
+    mock_server_running : `bool`
+        Is the mock server running?
     """
 
     valid_simulation_modes = [0, 1]
@@ -85,6 +149,7 @@ class WeatherForecastCSC(salobj.BaseCsc):
         self.telemetry_task = utils.make_done_future()
         self.last_time = None
         self.interval = 12 * 3600
+        self.mock_server_running = False
 
     def convert_time(self, timestamp):
         """Convert string to datetime object and then convert to unix
@@ -106,25 +171,26 @@ class WeatherForecastCSC(salobj.BaseCsc):
         Clean up the data for DDS publication.
         Take data from json format and publish to DDS telemetry items.
         """
-        if self.simulation_mode == 1:
-            test_file = pathlib.Path(
-                "python/lsst/ts/weatherforecast/data/forecast-test.json"
-            )
-            with open(test_file) as f:
-                df = json.load(f)
-        else:
+        try:
+            if self.simulation_mode:
+                SITE_URL = "http://127.0.0.1:8080"
+            self.log.info(f"{SITE_URL=}, {LATITUDE=}, {LONGITUDE=}, {API_KEY=}")
             params = {"lat": LATITUDE, "lon": LONGITUDE, "apikey": API_KEY}
             async with aiohttp.ClientSession(
                 SITE_URL, raise_for_status=True
             ) as session:
                 async with session.get(
-                    "/packages/trendpro-1h_trendpro-day", params=params
+                    "/packages/trend-1h/packages/trendpro-1h_trendpro-day",
+                    params=params,
                 ) as resp:
+                    self.log.info("Session gotten.")
                     fd = io.StringIO()
                     async for chunk in resp.content.iter_chunked(1024):
-                        fd.write(chunk)
-            df = json.load(fd)
-        try:
+                        decoded_chunk = chunk.decode()
+                        fd.write(decoded_chunk)
+            fd.seek(0)
+            df = fd.read()
+            df = json.loads(df)
             metadata_fld = df["metadata"]
             modelrun_utc = datetime.datetime.strptime(
                 metadata_fld["modelrun_utc"], "%Y-%m-%d %H:%M"
@@ -258,8 +324,7 @@ class WeatherForecastCSC(salobj.BaseCsc):
             self.last_time = utils.current_tai()
             await asyncio.sleep(self.interval)
         except Exception:
-            self.log.error("Something went wrong")
-            raise
+            self.log.exception("Something went wrong")
 
     async def handle_summary_state(self):
         """Handle summary state transitions.
@@ -270,7 +335,14 @@ class WeatherForecastCSC(salobj.BaseCsc):
         stop the telemetry loop.
         """
         if self.disabled_or_enabled:
+            if not self.mock_server_running and self.simulation_mode:
+                self.runner = await start_server()
+                self.mock_server_running = True
+                # raise RuntimeError("Intentional raise")
             if self.telemetry_task.done():
                 self.telemetry_task = asyncio.create_task(self.telemetry())
         else:
+            if self.mock_server_running:
+                await stop_server(self.runner)
+                self.mock_server_running = False
             self.telemetry_task.cancel()

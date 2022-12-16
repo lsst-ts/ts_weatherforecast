@@ -215,6 +215,14 @@ class WeatherForecastCSC(salobj.BaseCsc):
             for stamp in timestamp:
                 timestamp = self.convert_time(stamp)
                 converted_timestamp.append(timestamp)
+            # check for None in extraTerrestrialRadiationBackwards
+            cleaned_extra_terrestrial_radiation_backwards = []
+            for value in trend_hour_fld["extraterrestrialradiation_backwards"]:
+                if value is None:
+                    value = 0.0
+                    cleaned_extra_terrestrial_radiation_backwards.append(value)
+                else:
+                    cleaned_extra_terrestrial_radiation_backwards.append(value)
             await self.tel_hourlyTrend.set_write(
                 timestamp=converted_timestamp,
                 temperature=trend_hour_fld["temperature"],
@@ -227,9 +235,7 @@ class WeatherForecastCSC(salobj.BaseCsc):
                 seaLevelPressure=trend_hour_fld["sealevelpressure"],
                 relativeHumidity=trend_hour_fld["relativehumidity"],
                 ghiBackwards=trend_hour_fld["ghi_backwards"],
-                extraTerrestrialRadiationBackwards=trend_hour_fld[
-                    "extraterrestrialradiation_backwards"
-                ],
+                extraTerrestrialRadiationBackwards=cleaned_extra_terrestrial_radiation_backwards,
                 totalCloudCover=trend_hour_fld["totalcloudcover"],
                 totalCloudCoverSpread=trend_hour_fld["totalcloudcover_spread"],
                 snowFraction=trend_hour_fld["snowfraction"],

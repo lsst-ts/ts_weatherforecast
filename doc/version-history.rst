@@ -9,6 +9,7 @@ v0.2.0
 * Add MockServer.
 * Fix SITE_URL constant.
 * Make enable_cmdline_state true.
+* Check if extraTerrestrialRadiationBackwards contains None and clean it.
 
 v0.1.4
 ======

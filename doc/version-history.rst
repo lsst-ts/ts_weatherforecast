@@ -4,6 +4,14 @@
 Version History
 ===============
 
+v0.2.0
+======
+* Add MockServer.
+* Fix SITE_URL constant.
+* Make enable_cmdline_state true.
+* Check if extraTerrestrialRadiationBackwards contains None and clean it.
+* Make sure that telemetry_loop is in a while loop.
+
 v0.1.4
 ======
 * Add missing execute_csc function to csc module

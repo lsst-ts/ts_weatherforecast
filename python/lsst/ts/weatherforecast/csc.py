@@ -70,6 +70,8 @@ class WeatherForecastCSC(salobj.BaseCsc):
         The interval at which the telemetry loop is run. (Seconds)
     mock_server : `None`
         The mock server started if simulation_mode is enabled.
+    tel_loop_error_wait_time: `int`
+        The wait time for retrying if the API call fails.
     api_key : `str`
         The stored API key for Meteoblue received from an environment variable.
     """
@@ -89,6 +91,7 @@ class WeatherForecastCSC(salobj.BaseCsc):
         self.last_time = None
         self.interval = 12 * 3600
         self.mock_server = None
+        self.tel_loop_error_wait_time = 3600
         self.api_key = os.getenv("METEOBLUE_API_KEY")
         if self.api_key is None:
             raise RuntimeError("METEOBLUE_API_KEY must be defined.")
@@ -271,6 +274,9 @@ class WeatherForecastCSC(salobj.BaseCsc):
                 await asyncio.sleep(self.interval)
             except Exception:
                 self.log.exception("Telemetry loop failed.")
+                # wait an amount of time to try again
+                # FIXME DM-37577
+                await asyncio.sleep(self.tel_loop_error_wait_time)
 
     async def handle_summary_state(self):
         """Handle summary state transitions.

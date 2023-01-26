@@ -4,6 +4,10 @@
 Version History
 ===============
 
+v0.3.0
+======
+* Make CSC configurable.
+
 v0.2.0
 ======
 * Add MockServer.

@@ -29,6 +29,7 @@ import aiohttp
 from lsst.ts import salobj, utils
 
 from . import __version__
+from .config_schema import CONFIG_SCHEMA
 from .mock_server import MockServer
 
 LATITUDE = -30.24
@@ -45,7 +46,7 @@ def execute_csc():
     asyncio.run(WeatherForecastCSC.amain(index=False))
 
 
-class WeatherForecastCSC(salobj.BaseCsc):
+class WeatherForecastCSC(salobj.ConfigurableCsc):
     """Implement the WeatherForecast CSC.
 
     The WeatherForecast Commandable SAL Component simply streams forecast
@@ -80,12 +81,21 @@ class WeatherForecastCSC(salobj.BaseCsc):
     version = __version__
     enable_cmdline_state = True
 
-    def __init__(self, initial_state=salobj.State.STANDBY, simulation_mode=0) -> None:
+    def __init__(
+        self,
+        initial_state=salobj.State.STANDBY,
+        simulation_mode=0,
+        config_dir=None,
+        override="",
+    ) -> None:
         super().__init__(
             name="WeatherForecast",
             index=None,
             initial_state=initial_state,
             simulation_mode=simulation_mode,
+            config_schema=CONFIG_SCHEMA,
+            config_dir=config_dir,
+            override=override,
         )
         self.telemetry_task = utils.make_done_future()
         self.last_time = None
@@ -95,6 +105,13 @@ class WeatherForecastCSC(salobj.BaseCsc):
         self.api_key = os.getenv("METEOBLUE_API_KEY")
         if self.api_key is None:
             raise RuntimeError("METEOBLUE_API_KEY must be defined.")
+
+    @staticmethod
+    def get_config_pkg():
+        return "ts_config_ocs"
+
+    async def configure(self, config):
+        self.tel_loop_error_wait_time = config.tel_loop_error_wait_time
 
     def convert_time(self, timestamp):
         """Convert string to datetime object and then convert to unix

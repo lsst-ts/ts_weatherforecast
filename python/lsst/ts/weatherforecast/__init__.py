@@ -24,4 +24,5 @@ try:
 except ImportError:
     __version__ = "?"
 
+from .config_schema import *
 from .csc import *

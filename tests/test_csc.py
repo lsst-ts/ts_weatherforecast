@@ -27,6 +27,8 @@ import unittest
 from lsst.ts import salobj, weatherforecast
 from pytest import approx
 
+TEST_CONFIG_DIR = pathlib.Path(__file__).parents[1].joinpath("tests", "data", "config")
+
 
 class WeatherForecastCSCTestCase(
     salobj.BaseCscTestCase, unittest.IsolatedAsyncioTestCase
@@ -40,10 +42,12 @@ class WeatherForecastCSCTestCase(
         return super().setUp()
 
     def basic_make_csc(
-        self, initial_state, config_dir=None, simulation_mode=1, **kwargs
+        self, initial_state, config_dir=TEST_CONFIG_DIR, simulation_mode=1, **kwargs
     ):
         return weatherforecast.csc.WeatherForecastCSC(
-            initial_state=initial_state, simulation_mode=simulation_mode
+            initial_state=initial_state,
+            simulation_mode=simulation_mode,
+            config_dir=config_dir,
         )
 
     async def test_bin_script(self):

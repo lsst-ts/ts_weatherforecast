@@ -4,6 +4,19 @@
 Version History
 ===============
 
+v0.3.0
+======
+* Make CSC configurable.
+
+v0.2.0
+======
+* Add MockServer.
+* Fix SITE_URL constant.
+* Make enable_cmdline_state true.
+* Check if extraTerrestrialRadiationBackwards contains None and clean it.
+* Make sure that telemetry_loop is in a while loop.
+* If bad request is received, wait an amount of time to try again.
+
 v0.1.4
 ======
 * Add missing execute_csc function to csc module

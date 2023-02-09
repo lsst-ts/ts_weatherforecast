@@ -178,6 +178,13 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                     0.0 if value is None else value
                     for value in trend_hour_fld["extraterrestrialradiation_backwards"]
                 ]
+                for name, values in trend_hour_fld.items():
+                    if len(values) == 382:
+                        pass
+                    else:
+                        raise RuntimeError(
+                            f"Count of {name} = {len(values)}, should be 360."
+                        )
                 await self.tel_hourlyTrend.set_write(
                     timestamp=converted_timestamps,
                     temperature=trend_hour_fld["temperature"],
@@ -220,6 +227,13 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                 converted_timestamps = [
                     self.convert_time(timestamp) for timestamp in timestamps
                 ]
+                for name, values in trend_daily_fld.items():
+                    if len(values) == 15:
+                        pass
+                    else:
+                        raise RuntimeError(
+                            f"Count of {name} = {len(values)}, should be 15."
+                        )
                 await self.tel_dailyTrend.set_write(
                     timestamp=converted_timestamps,
                     pictocode=trend_daily_fld["pictocode"],

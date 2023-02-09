@@ -22,6 +22,7 @@
 __all__ = ["MockServer"]
 
 import json
+import logging
 import pathlib
 
 from aiohttp import web
@@ -54,6 +55,8 @@ class MockServer:
         test_file = pathlib.Path(
             "python/lsst/ts/weatherforecast/data/forecast-test.json"
         )
+        self.retries = 0
+        self.log = logging.getLogger(__name__)
         with open(test_file) as f:
             self.response = json.load(f)
 
@@ -108,4 +111,8 @@ class MockServer:
             The canned json response.
             See the test file in the data directory for the format.
         """
+        while self.retries <= 3:
+            self.log.info(f"Inside bad request check. {self.retries=}")
+            self.retries += 1
+            raise web.HTTPBadRequest(reason="Something went wrong.")
         return web.json_response(self.response)

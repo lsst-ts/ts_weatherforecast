@@ -55,6 +55,14 @@ class WeatherForecastCSCTestCase(
             name="WeatherForecast", index=False, exe_name="run_weatherforecast"
         )
 
+    async def test_missing_forecast(self):
+        async with self.make_csc(
+            initial_state=salobj.State.ENABLED,
+            simulation_mode=2,
+            config_dir=TEST_CONFIG_DIR,
+        ):
+            await self.remote.tel_hourlyTrend.aget(timeout=45)
+
     async def test_telemetry(self):
         test_file = pathlib.Path(
             "python/lsst/ts/weatherforecast/data/forecast-test.json"

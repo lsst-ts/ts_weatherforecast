@@ -48,13 +48,13 @@ class MockServer:
         The webapp site object.
     """
 
-    def __init__(self, port=0) -> None:
+    def __init__(
+        self, port=0, data="python/lsst/ts/weatherforecast/data/forecast-test.json"
+    ) -> None:
         self.port = port
         self.runner = None
         self.site = None
-        test_file = pathlib.Path(
-            "python/lsst/ts/weatherforecast/data/forecast-test.json"
-        )
+        test_file = pathlib.Path(data)
         self.retries = 0
         self.log = logging.getLogger(__name__)
         with open(test_file) as f:

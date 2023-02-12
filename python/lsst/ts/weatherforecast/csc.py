@@ -39,6 +39,8 @@ TIMEZONE = "America/Santiago"
 SITE_URL = "https://my.meteoblue.com"
 FORMAT = "json"
 REQUEST_URL = "/packages/trendpro-1h_trendpro-day"
+COUNT_HOURLY = 382
+COUNT_DAILY = 15
 
 
 def execute_csc():
@@ -77,7 +79,7 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
         The stored API key for Meteoblue received from an environment variable.
     """
 
-    valid_simulation_modes = [0, 1]
+    valid_simulation_modes = [0, 1, 2]
     version = __version__
     enable_cmdline_state = True
 
@@ -125,6 +127,19 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
         timestamp = datetime.datetime.strptime(timestamp, "%Y-%m-%d %H:%M").timestamp()
         return timestamp
 
+    def pad_data(self, lst, match):
+        self.log.debug("Padding values according to type.")
+        if isinstance(lst[0], int):
+            lst.extend([0] * match)
+        elif isinstance(lst[0], float):
+            lst.extend([0.0] * match)
+        elif isinstance(lst[0], str):
+            lst.extend(["1970-01-01 00:00"] * match)
+        else:
+            raise RuntimeError(f"Unable to pad type {type(lst[0])}.")
+        lst = lst[:match]
+        return lst
+
     async def telemetry(self):
         """Implement telemetry loop.
 
@@ -169,6 +184,15 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                     modelrunUpdatetime=modelrun_updatetime_utc,
                 )
                 trend_hour_fld = response["trend_1h"]
+                for name, values in trend_hour_fld.items():
+                    if len(values) == COUNT_HOURLY:
+                        pass
+                    else:
+                        self.log.error(
+                            f"Count of {name} = {len(values)}, should be {COUNT_HOURLY}."
+                        )
+                        self.log.info("Attempting to pad data in order to continue.")
+                        trend_hour_fld[name] = self.pad_data(values, COUNT_HOURLY)
                 timestamps = trend_hour_fld["time"]
                 converted_timestamps = [
                     self.convert_time(timestamp) for timestamp in timestamps
@@ -178,13 +202,6 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                     0.0 if value is None else value
                     for value in trend_hour_fld["extraterrestrialradiation_backwards"]
                 ]
-                for name, values in trend_hour_fld.items():
-                    if len(values) == 382:
-                        pass
-                    else:
-                        raise RuntimeError(
-                            f"Count of {name} = {len(values)}, should be 360."
-                        )
                 await self.tel_hourlyTrend.set_write(
                     timestamp=converted_timestamps,
                     temperature=trend_hour_fld["temperature"],
@@ -228,11 +245,15 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                     self.convert_time(timestamp) for timestamp in timestamps
                 ]
                 for name, values in trend_daily_fld.items():
-                    if len(values) == 15:
+                    if len(values) == COUNT_DAILY:
                         pass
                     else:
+                        self.log.error(
+                            f"Count of {name} = {len(values)}, should be {COUNT_DAILY}"
+                        )
+                        trend_daily_fld[name] = self.pad_data(values, COUNT_DAILY)
                         raise RuntimeError(
-                            f"Count of {name} = {len(values)}, should be 15."
+                            f"Count of {name} = {len(values)}, should be {COUNT_DAILY}."
                         )
                 await self.tel_dailyTrend.set_write(
                     timestamp=converted_timestamps,
@@ -319,7 +340,12 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
         """
         if self.disabled_or_enabled:
             if self.mock_server is None and self.simulation_mode:
-                self.mock_server = MockServer()
+                if self.simulation_mode == 1:
+                    self.mock_server = MockServer()
+                elif self.simulation_mode == 2:
+                    self.mock_server = MockServer(
+                        data="python/lsst/ts/weatherforecast/data/forecast-missing.json"
+                    )
                 await self.mock_server.start()
             if self.telemetry_task.done():
                 self.telemetry_task = asyncio.create_task(self.telemetry())

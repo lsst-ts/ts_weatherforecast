@@ -184,6 +184,11 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                     modelrunUpdatetime=modelrun_updatetime_utc,
                 )
                 trend_hour_fld = response["trend_1h"]
+                # check for None in extraTerrestrialRadiationBackwards
+                trend_hour_fld["extraterrestrialradiation_backwards"] = [
+                    0.0 if value is None else value
+                    for value in trend_hour_fld["extraterrestrialradiation_backwards"]
+                ]
                 for name, values in trend_hour_fld.items():
                     if len(values) == COUNT_HOURLY:
                         pass
@@ -196,11 +201,6 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                 timestamps = trend_hour_fld["time"]
                 converted_timestamps = [
                     self.convert_time(timestamp) for timestamp in timestamps
-                ]
-                # check for None in extraTerrestrialRadiationBackwards
-                trend_hour_fld["extraterrestrialradiation_backwards"] = [
-                    0.0 if value is None else value
-                    for value in trend_hour_fld["extraterrestrialradiation_backwards"]
                 ]
                 await self.tel_hourlyTrend.set_write(
                     timestamp=converted_timestamps,
@@ -240,10 +240,6 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                     ],
                 )
                 trend_daily_fld = response["trend_day"]
-                timestamps = trend_daily_fld["time"]
-                converted_timestamps = [
-                    self.convert_time(timestamp) for timestamp in timestamps
-                ]
                 for name, values in trend_daily_fld.items():
                     if len(values) == COUNT_DAILY:
                         pass
@@ -252,9 +248,10 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                             f"Count of {name} = {len(values)}, should be {COUNT_DAILY}"
                         )
                         trend_daily_fld[name] = self.pad_data(values, COUNT_DAILY)
-                        raise RuntimeError(
-                            f"Count of {name} = {len(values)}, should be {COUNT_DAILY}."
-                        )
+                timestamps = trend_daily_fld["time"]
+                converted_timestamps = [
+                    self.convert_time(timestamp) for timestamp in timestamps
+                ]
                 await self.tel_dailyTrend.set_write(
                     timestamp=converted_timestamps,
                     pictocode=trend_daily_fld["pictocode"],

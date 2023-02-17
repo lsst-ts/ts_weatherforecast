@@ -23,6 +23,7 @@ __all__ = ["WeatherForecastCSC", "execute_csc"]
 
 import asyncio
 import datetime
+import math
 import os
 
 import aiohttp
@@ -39,6 +40,8 @@ TIMEZONE = "America/Santiago"
 SITE_URL = "https://my.meteoblue.com"
 FORMAT = "json"
 REQUEST_URL = "/packages/trendpro-1h_trendpro-day"
+COUNT_HOURLY = 382
+COUNT_DAILY = 15
 
 
 def execute_csc():
@@ -61,6 +64,10 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
     simulation_mode : `int`
         Whether the CSC is in simulation mode.
 
+        * 0 - real mode
+        * 1 - simulated data
+        * 2 - simulated missing data
+
     Attributes
     ----------
     telemetry_task : `asyncio.Future`
@@ -75,9 +82,18 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
         The wait time for retrying if the API call fails.
     api_key : `str`
         The stored API key for Meteoblue received from an environment variable.
+
+    Notes
+    -----
+
+    Simulation mode has three values.
+
+    * 0 - real data mode.
+    * 1 - Simulated data mode.
+    * 2 - Missing data mode.
     """
 
-    valid_simulation_modes = [0, 1]
+    valid_simulation_modes = [0, 1, 2]
     version = __version__
     enable_cmdline_state = True
 
@@ -117,13 +133,56 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
         """Convert string to datetime object and then convert to unix
         timestamp.
 
+        This is used to convert the string that MeteoBlue returns for time
+        into a timestamp that can be published over DDS.
+
         Parameters
         ----------
         timestamp : `str`
             The time to convert.
+
+        Returns
+        -------
+        timestamp : `list` of `int`
+            An array of timestamps converted from the date string.
         """
         timestamp = datetime.datetime.strptime(timestamp, "%Y-%m-%d %H:%M").timestamp()
         return timestamp
+
+    def fix_data_length(self, lst, match):
+        """Pad the data with default values.
+
+        MeteoBlue's API sometimes returns inconsistent count of values.
+        This method is an attempt to sanitize the data.
+
+        Parameters
+        ----------
+        lst : `list`
+            List of values to pad out.
+        match : `int`
+            The count to match the length of the list to.
+            Hourly trend is 382 and daily trend is 15.
+
+        Returns
+        -------
+        lst : `list`
+            The corrected count list of values.
+        """
+        self.log.info("Attempting to pad data in order to continue.")
+        if len(lst) > match:
+            self.log.info("Ignoring excess values.")
+            lst = lst[:match]
+            return lst
+        if isinstance(lst[0], int):
+            lst.extend([-1] * (match - len(lst)))
+        elif isinstance(lst[0], float):
+            lst.extend([math.nan] * (match - len(lst)))
+        elif isinstance(lst[0], str):
+            lst.extend(["1970-01-01 00:00"] * (match - len(lst)))
+        else:
+            raise RuntimeError(f"Unable to pad type {type(lst[0])}.")
+        lst = lst[:match]
+        return lst
 
     async def telemetry(self):
         """Implement telemetry loop.
@@ -169,14 +228,24 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                     modelrunUpdatetime=modelrun_updatetime_utc,
                 )
                 trend_hour_fld = response["trend_1h"]
-                timestamps = trend_hour_fld["time"]
-                converted_timestamps = [
-                    self.convert_time(timestamp) for timestamp in timestamps
-                ]
                 # check for None in extraTerrestrialRadiationBackwards
                 trend_hour_fld["extraterrestrialradiation_backwards"] = [
                     0.0 if value is None else value
                     for value in trend_hour_fld["extraterrestrialradiation_backwards"]
+                ]
+                for name, values in trend_hour_fld.items():
+                    if len(values) == COUNT_HOURLY:
+                        pass
+                    else:
+                        self.log.warning(
+                            f"Count of {name} = {len(values)}, setting it to {COUNT_HOURLY}."
+                        )
+                        trend_hour_fld[name] = self.fix_data_length(
+                            values, COUNT_HOURLY
+                        )
+                timestamps = trend_hour_fld["time"]
+                converted_timestamps = [
+                    self.convert_time(timestamp) for timestamp in timestamps
                 ]
                 await self.tel_hourlyTrend.set_write(
                     timestamp=converted_timestamps,
@@ -216,6 +285,16 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                     ],
                 )
                 trend_daily_fld = response["trend_day"]
+                for name, values in trend_daily_fld.items():
+                    if len(values) == COUNT_DAILY:
+                        pass
+                    else:
+                        self.log.error(
+                            f"Count of {name} = {len(values)}, setting it to {COUNT_DAILY}."
+                        )
+                        trend_daily_fld[name] = self.fix_data_length(
+                            values, COUNT_DAILY
+                        )
                 timestamps = trend_daily_fld["time"]
                 converted_timestamps = [
                     self.convert_time(timestamp) for timestamp in timestamps
@@ -305,7 +384,12 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
         """
         if self.disabled_or_enabled:
             if self.mock_server is None and self.simulation_mode:
-                self.mock_server = MockServer()
+                if self.simulation_mode == 1:
+                    self.mock_server = MockServer()
+                elif self.simulation_mode == 2:
+                    self.mock_server = MockServer(
+                        data="python/lsst/ts/weatherforecast/data/forecast-missing.json"
+                    )
                 await self.mock_server.start()
             if self.telemetry_task.done():
                 self.telemetry_task = asyncio.create_task(self.telemetry())

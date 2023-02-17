@@ -1,7 +1,7 @@
 """Sphinx configuration file for TSSW package"""
 
-from documenteer.conf.pipelinespkg import *
-from lsst.ts import weatherforecast
+from documenteer.conf.pipelinespkg import *  # type: ignore # noqa
+from lsst.ts import weatherforecast  # type: ignore # noqa
 
 project = "ts_weatherforecast"
 html_theme_options["logotext"] = project

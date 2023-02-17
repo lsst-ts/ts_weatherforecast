@@ -55,20 +55,32 @@ class WeatherForecastCSCTestCase(
             name="WeatherForecast", index=False, exe_name="run_weatherforecast"
         )
 
+    async def test_missing_forecast(self):
+        async with self.make_csc(
+            initial_state=salobj.State.ENABLED,
+            simulation_mode=2,
+            config_dir=TEST_CONFIG_DIR,
+        ):
+            await self.remote.tel_hourlyTrend.aget(timeout=45)
+
     async def test_telemetry(self):
         test_file = pathlib.Path(
             "python/lsst/ts/weatherforecast/data/forecast-test.json"
         )
-        async with self.make_csc(initial_state=salobj.State.ENABLED, simulation_mode=1):
-            metadata = await self.remote.tel_metadata.aget(timeout=10)
+        async with self.make_csc(
+            initial_state=salobj.State.ENABLED,
+            simulation_mode=1,
+            config_dir=TEST_CONFIG_DIR,
+        ):
+            metadata = await self.remote.tel_metadata.aget(timeout=45)
             assert approx(-30.24) == metadata.latitude
             assert approx(-70.34) == metadata.longitude
             assert 2298 == metadata.height
             assert "GMT-03" == metadata.timezoneAbbrevation
             assert -3 == metadata.timeOffset
 
-            hourly_trend = await self.remote.tel_hourlyTrend.aget()
-            daily_trend = await self.remote.tel_dailyTrend.aget()
+            hourly_trend = await self.remote.tel_hourlyTrend.aget(timeout=10)
+            daily_trend = await self.remote.tel_dailyTrend.aget(timeout=10)
             with open(test_file) as f:
                 df = json.load(f)
 

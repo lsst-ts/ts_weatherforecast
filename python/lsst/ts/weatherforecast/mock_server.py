@@ -22,6 +22,7 @@
 __all__ = ["MockServer"]
 
 import json
+import logging
 import pathlib
 
 from aiohttp import web
@@ -45,15 +46,20 @@ class MockServer:
         The webapp runner.
     site : `None`
         The webapp site object.
+    bad_request_counter : `int`
+        Meant to count the number of bad requests to send before returning
+        a good response.
     """
 
-    def __init__(self, port=0) -> None:
+    def __init__(
+        self, port=0, data="python/lsst/ts/weatherforecast/data/forecast-test.json"
+    ) -> None:
         self.port = port
         self.runner = None
         self.site = None
-        test_file = pathlib.Path(
-            "python/lsst/ts/weatherforecast/data/forecast-test.json"
-        )
+        test_file = pathlib.Path(data)
+        self.bad_request_counter = 0
+        self.log = logging.getLogger(__name__)
         with open(test_file) as f:
             self.response = json.load(f)
 
@@ -108,4 +114,8 @@ class MockServer:
             The canned json response.
             See the test file in the data directory for the format.
         """
+        if self.bad_request_counter <= 3:
+            self.log.info(f"Inside bad request check. {self.bad_request_counter=}")
+            self.bad_request_counter += 1
+            raise web.HTTPBadRequest(reason="Something went wrong.")
         return web.json_response(self.response)

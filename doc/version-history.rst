@@ -4,6 +4,12 @@
 Version History
 ===============
 
+v0.3.1
+======
+* Add count check to trend_daily and hourly fields.
+* Attempt to pad or equalize data when count is mismatched.
+* Add simulation mode that has missing data.
+
 v0.3.0
 ======
 * Make CSC configurable.

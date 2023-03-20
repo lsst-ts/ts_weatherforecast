@@ -168,9 +168,7 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
         lst : `list`
             The corrected count list of values.
         """
-        self.log.info("Attempting to pad data in order to continue.")
         if len(lst) > match:
-            self.log.info("Ignoring excess values.")
             lst = lst[:match]
             return lst
         if isinstance(lst[0], int):
@@ -198,9 +196,7 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                     if self.simulation_mode
                     else SITE_URL
                 )
-                self.log.info(
-                    f"{site_url=}, {LATITUDE=}, {LONGITUDE=}, {self.api_key=}"
-                )
+                self.log.info(f"{site_url=}, {LATITUDE=}, {LONGITUDE=}")
                 params = {"lat": LATITUDE, "lon": LONGITUDE, "apikey": self.api_key}
                 async with aiohttp.ClientSession(
                     site_url, raise_for_status=True

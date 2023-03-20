@@ -4,6 +4,11 @@
 Version History
 ===============
 
+v0.3.2
+======
+* Remove api key from log.
+* Remove unnecessary log messages for fixing data length.
+
 v0.3.1
 ======
 * Add count check to trend_daily and hourly fields.

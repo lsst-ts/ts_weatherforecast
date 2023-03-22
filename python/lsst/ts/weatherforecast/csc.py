@@ -182,6 +182,9 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
         lst = lst[:match]
         return lst
 
+    # FIXME DM-38397 remove workarounds once XML is changed to 336 hours
+    # and 14 day lengths.
+
     async def telemetry(self):
         """Implement telemetry loop.
 
@@ -229,6 +232,8 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                     0.0 if value is None else value
                     for value in trend_hour_fld["extraterrestrialradiation_backwards"]
                 ]
+                for name, values in trend_hour_fld.items():
+                    trend_hour_fld[name] = values[:336]
                 for name, values in trend_hour_fld.items():
                     if len(values) == COUNT_HOURLY:
                         pass
@@ -281,6 +286,8 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                     ],
                 )
                 trend_daily_fld = response["trend_day"]
+                for name, values in trend_daily_fld.items():
+                    trend_daily_fld[name] = values[:14]
                 for name, values in trend_daily_fld.items():
                     if len(values) == COUNT_DAILY:
                         pass

@@ -85,211 +85,250 @@ class WeatherForecastCSCTestCase(
                 df = json.load(f)
 
             hourly_trend_fld = df["trend_1h"]
-            assert approx(hourly_trend_fld["temperature"]) == hourly_trend.temperature
+            for name, values in hourly_trend_fld.items():
+                hourly_trend_fld[name] = values[:336]
             assert (
-                approx(hourly_trend_fld["temperature_spread"])
-                == hourly_trend.temperatureSpread
+                approx(hourly_trend_fld["temperature"])
+                == hourly_trend.temperature[:336]
             )
             assert (
-                approx(hourly_trend_fld["precipitation"]) == hourly_trend.precipitation
+                approx(hourly_trend_fld["temperature_spread"])
+                == hourly_trend.temperatureSpread[:336]
+            )
+            assert (
+                approx(hourly_trend_fld["precipitation"])
+                == hourly_trend.precipitation[:336]
             )
             assert (
                 approx(hourly_trend_fld["precipitation_spread"])
-                == hourly_trend.precipitationSpread
+                == hourly_trend.precipitationSpread[:336]
             )
-            assert approx(hourly_trend_fld["windspeed"]) == hourly_trend.windspeed
+            assert approx(hourly_trend_fld["windspeed"]) == hourly_trend.windspeed[:336]
             assert (
                 approx(hourly_trend_fld["windspeed_spread"])
-                == hourly_trend.windspeedSpread
+                == hourly_trend.windspeedSpread[:336]
             )
-            assert hourly_trend_fld["winddirection"] == hourly_trend.windDirection
-            assert hourly_trend_fld["sealevelpressure"] == hourly_trend.seaLevelPressure
-            assert hourly_trend_fld["relativehumidity"] == hourly_trend.relativeHumidity
+            assert hourly_trend_fld["winddirection"] == hourly_trend.windDirection[:336]
             assert (
-                approx(hourly_trend_fld["ghi_backwards"]) == hourly_trend.ghiBackwards
+                hourly_trend_fld["sealevelpressure"]
+                == hourly_trend.seaLevelPressure[:336]
+            )
+            assert (
+                hourly_trend_fld["relativehumidity"]
+                == hourly_trend.relativeHumidity[:336]
+            )
+            assert (
+                approx(hourly_trend_fld["ghi_backwards"])
+                == hourly_trend.ghiBackwards[:336]
             )
             assert (
                 approx(hourly_trend_fld["extraterrestrialradiation_backwards"])
-                == hourly_trend.extraTerrestrialRadiationBackwards
+                == hourly_trend.extraTerrestrialRadiationBackwards[:336]
             )
-            assert hourly_trend_fld["totalcloudcover"] == hourly_trend.totalCloudCover
+            assert (
+                hourly_trend_fld["totalcloudcover"]
+                == hourly_trend.totalCloudCover[:336]
+            )
             assert (
                 hourly_trend_fld["totalcloudcover_spread"]
-                == hourly_trend.totalCloudCoverSpread
+                == hourly_trend.totalCloudCoverSpread[:336]
             )
-            assert approx(hourly_trend_fld["snowfraction"]) == hourly_trend.snowFraction
-            assert hourly_trend_fld["pictocode"] == hourly_trend.pictocode
-            assert approx(hourly_trend_fld["gust"]) == hourly_trend.gust
-            assert hourly_trend_fld["lowclouds"] == hourly_trend.lowClouds
-            assert hourly_trend_fld["midclouds"] == hourly_trend.midClouds
-            assert hourly_trend_fld["hiclouds"] == hourly_trend.highClouds
-            assert hourly_trend_fld["sunshinetime"] == hourly_trend.sunshineTime
-            assert hourly_trend_fld["visibility"] == hourly_trend.visibility
+            assert (
+                approx(hourly_trend_fld["snowfraction"])
+                == hourly_trend.snowFraction[:336]
+            )
+            assert hourly_trend_fld["pictocode"] == hourly_trend.pictocode[:336]
+            assert approx(hourly_trend_fld["gust"]) == hourly_trend.gust[:336]
+            assert hourly_trend_fld["lowclouds"] == hourly_trend.lowClouds[:336]
+            assert hourly_trend_fld["midclouds"] == hourly_trend.midClouds[:336]
+            assert hourly_trend_fld["hiclouds"] == hourly_trend.highClouds[:336]
+            assert hourly_trend_fld["sunshinetime"] == hourly_trend.sunshineTime[:336]
+            assert hourly_trend_fld["visibility"] == hourly_trend.visibility[:336]
             assert (
                 approx(hourly_trend_fld["skintemperature"])
-                == hourly_trend.skinTemperature
+                == hourly_trend.skinTemperature[:336]
             )
             assert (
                 approx(hourly_trend_fld["dewpointtemperature"])
-                == hourly_trend.dewPointTemperature
+                == hourly_trend.dewPointTemperature[:336]
             )
             assert (
                 hourly_trend_fld["precipitation_probability"]
-                == hourly_trend.precipitationProbability
+                == hourly_trend.precipitationProbability[:336]
             )
-            assert hourly_trend_fld["cape"] == hourly_trend.cape
-            assert approx(hourly_trend_fld["liftedindex"]) == hourly_trend.liftedIndex
+            assert hourly_trend_fld["cape"] == hourly_trend.cape[:336]
+            assert (
+                approx(hourly_trend_fld["liftedindex"])
+                == hourly_trend.liftedIndex[:336]
+            )
             assert (
                 approx(hourly_trend_fld["evapotranspiration"])
-                == hourly_trend.evapoTranspiration
+                == hourly_trend.evapoTranspiration[:336]
             )
             assert (
                 approx(hourly_trend_fld["referenceevapotranspiration_fao"])
-                == hourly_trend.referenceEvapoTranspirationFao
+                == hourly_trend.referenceEvapoTranspirationFao[:336]
             )
 
             daily_trend_fld = df["trend_day"]
-            assert daily_trend_fld["pictocode"] == daily_trend.pictocode
+            for name, values in daily_trend_fld.items():
+                daily_trend_fld[name] = values[:14]
+            assert daily_trend_fld["pictocode"] == daily_trend.pictocode[:14]
             assert (
-                approx(daily_trend_fld["temperature_max"]) == daily_trend.temperatureMax
+                approx(daily_trend_fld["temperature_max"])
+                == daily_trend.temperatureMax[:14]
             )
             assert (
-                approx(daily_trend_fld["temperature_min"]) == daily_trend.temperatureMin
+                approx(daily_trend_fld["temperature_min"])
+                == daily_trend.temperatureMin[:14]
             )
             assert (
                 approx(daily_trend_fld["temperature_mean"])
-                == daily_trend.temperatureMean
+                == daily_trend.temperatureMean[:14]
             )
             assert (
                 approx(daily_trend_fld["temperature_spread"])
-                == daily_trend.temperatureSpread
+                == daily_trend.temperatureSpread[:14]
             )
-            assert daily_trend_fld["precipitation"] == daily_trend.precipitation
+            assert daily_trend_fld["precipitation"] == daily_trend.precipitation[:14]
             assert (
                 daily_trend_fld["precipitation_probability"]
-                == daily_trend.precipitationProbability
+                == daily_trend.precipitationProbability[:14]
             )
             assert (
                 approx(daily_trend_fld["precipitation_spread"])
-                == daily_trend.precipitationSpread
+                == daily_trend.precipitationSpread[:14]
             )
-            assert approx(daily_trend_fld["windspeed_max"]) == daily_trend.windspeedMax
-            assert approx(daily_trend_fld["windspeed_min"]) == daily_trend.windspeedMin
             assert (
-                approx(daily_trend_fld["windspeed_mean"]) == daily_trend.windspeedMean
+                approx(daily_trend_fld["windspeed_max"])
+                == daily_trend.windspeedMax[:14]
+            )
+            assert (
+                approx(daily_trend_fld["windspeed_min"])
+                == daily_trend.windspeedMin[:14]
+            )
+            assert (
+                approx(daily_trend_fld["windspeed_mean"])
+                == daily_trend.windspeedMean[:14]
             )
             assert (
                 approx(daily_trend_fld["windspeed_spread"])
-                == daily_trend.windspeedSpread
+                == daily_trend.windspeedSpread[:14]
             )
-            assert daily_trend_fld["winddirection"] == daily_trend.windDirection
+            assert daily_trend_fld["winddirection"] == daily_trend.windDirection[:14]
             assert (
                 daily_trend_fld["sealevelpressure_max"]
-                == daily_trend.seaLevelPressureMax
+                == daily_trend.seaLevelPressureMax[:14]
             )
             assert (
                 daily_trend_fld["sealevelpressure_min"]
-                == daily_trend.seaLevelPressureMin
+                == daily_trend.seaLevelPressureMin[:14]
             )
             assert (
                 daily_trend_fld["sealevelpressure_mean"]
-                == daily_trend.seaLevelPressureMean
+                == daily_trend.seaLevelPressureMean[:14]
             )
             assert (
                 daily_trend_fld["relativehumidity_max"]
-                == daily_trend.relativeHumidityMax
+                == daily_trend.relativeHumidityMax[:14]
             )
             assert (
                 daily_trend_fld["relativehumidity_min"]
-                == daily_trend.relativeHumidityMin
+                == daily_trend.relativeHumidityMin[:14]
             )
             assert (
                 daily_trend_fld["relativehumidity_mean"]
-                == daily_trend.relativeHumidityMean
+                == daily_trend.relativeHumidityMean[:14]
             )
-            assert approx(daily_trend_fld["snowfraction"]) == daily_trend.snowFraction
-            assert daily_trend_fld["predictability"] == daily_trend.predictability
+            assert (
+                approx(daily_trend_fld["snowfraction"]) == daily_trend.snowFraction[:14]
+            )
+            assert daily_trend_fld["predictability"] == daily_trend.predictability[:14]
             assert (
                 daily_trend_fld["predictability_class"]
-                == daily_trend.predictabilityClass
+                == daily_trend.predictabilityClass[:14]
             )
             assert (
-                daily_trend_fld["totalcloudcover_max"] == daily_trend.totalCloudCoverMax
+                daily_trend_fld["totalcloudcover_max"]
+                == daily_trend.totalCloudCoverMax[:14]
             )
             assert (
-                daily_trend_fld["totalcloudcover_min"] == daily_trend.totalCloudCoverMin
+                daily_trend_fld["totalcloudcover_min"]
+                == daily_trend.totalCloudCoverMin[:14]
             )
             assert (
                 daily_trend_fld["totalcloudcover_mean"]
-                == daily_trend.totalCloudCoverMean
+                == daily_trend.totalCloudCoverMean[:14]
             )
             assert (
                 daily_trend_fld["totalcloudcover_spread"]
-                == daily_trend.totalCloudCoverSpread
+                == daily_trend.totalCloudCoverSpread[:14]
             )
-            assert daily_trend_fld["ghi_total"] == daily_trend.ghiTotal
+            assert daily_trend_fld["ghi_total"] == daily_trend.ghiTotal[:14]
             assert (
                 daily_trend_fld["extraterrestrialradiation_total"]
-                == daily_trend.extraTerrestrialRadiationTotal
+                == daily_trend.extraTerrestrialRadiationTotal[:14]
             )
-            assert approx(daily_trend_fld["gust_max"]) == daily_trend.gustMax
-            assert approx(daily_trend_fld["gust_min"]) == daily_trend.gustMin
-            assert approx(daily_trend_fld["gust_mean"]) == daily_trend.gustMean
-            assert daily_trend_fld["lowclouds_max"] == daily_trend.lowCloudsMax
-            assert daily_trend_fld["lowclouds_min"] == daily_trend.lowCloudsMin
-            assert daily_trend_fld["lowclouds_mean"] == daily_trend.lowCloudsMean
-            assert daily_trend_fld["midclouds_max"] == daily_trend.midCloudsMax
-            assert daily_trend_fld["midclouds_min"] == daily_trend.midCloudsMin
-            assert daily_trend_fld["midclouds_mean"] == daily_trend.midCloudsMean
-            assert daily_trend_fld["hiclouds_max"] == daily_trend.hiCloudsMax
-            assert daily_trend_fld["hiclouds_min"] == daily_trend.hiCloudsMin
-            assert daily_trend_fld["hiclouds_mean"] == daily_trend.hiCloudsMean
-            assert daily_trend_fld["sunshinetime"] == daily_trend.sunshineTime
-            assert daily_trend_fld["visibility_max"] == daily_trend.visibilityMax
-            assert daily_trend_fld["visibility_min"] == daily_trend.visibilityMin
-            assert daily_trend_fld["visibility_mean"] == daily_trend.visibilityMean
+            assert approx(daily_trend_fld["gust_max"]) == daily_trend.gustMax[:14]
+            assert approx(daily_trend_fld["gust_min"]) == daily_trend.gustMin[:14]
+            assert approx(daily_trend_fld["gust_mean"]) == daily_trend.gustMean[:14]
+            assert daily_trend_fld["lowclouds_max"] == daily_trend.lowCloudsMax[:14]
+            assert daily_trend_fld["lowclouds_min"] == daily_trend.lowCloudsMin[:14]
+            assert daily_trend_fld["lowclouds_mean"] == daily_trend.lowCloudsMean[:14]
+            assert daily_trend_fld["midclouds_max"] == daily_trend.midCloudsMax[:14]
+            assert daily_trend_fld["midclouds_min"] == daily_trend.midCloudsMin[:14]
+            assert daily_trend_fld["midclouds_mean"] == daily_trend.midCloudsMean[:14]
+            assert daily_trend_fld["hiclouds_max"] == daily_trend.hiCloudsMax[:14]
+            assert daily_trend_fld["hiclouds_min"] == daily_trend.hiCloudsMin[:14]
+            assert daily_trend_fld["hiclouds_mean"] == daily_trend.hiCloudsMean[:14]
+            assert daily_trend_fld["sunshinetime"] == daily_trend.sunshineTime[:14]
+            assert daily_trend_fld["visibility_max"] == daily_trend.visibilityMax[:14]
+            assert daily_trend_fld["visibility_min"] == daily_trend.visibilityMin[:14]
+            assert daily_trend_fld["visibility_mean"] == daily_trend.visibilityMean[:14]
             assert (
                 approx(daily_trend_fld["skintemperature_max"])
-                == daily_trend.skinTemperatureMax
+                == daily_trend.skinTemperatureMax[:14]
             )
             assert (
                 approx(daily_trend_fld["skintemperature_min"])
-                == daily_trend.skinTemperatureMin
+                == daily_trend.skinTemperatureMin[:14]
             )
             assert (
                 approx(daily_trend_fld["skintemperature_mean"])
-                == daily_trend.skinTemperatureMean
+                == daily_trend.skinTemperatureMean[:14]
             )
             assert (
                 approx(daily_trend_fld["dewpointtemperature_max"])
-                == daily_trend.dewPointTemperatureMax
+                == daily_trend.dewPointTemperatureMax[:14]
             )
             assert (
                 approx(daily_trend_fld["dewpointtemperature_min"])
-                == daily_trend.dewPointTemperatureMin
+                == daily_trend.dewPointTemperatureMin[:14]
             )
             assert (
                 approx(daily_trend_fld["dewpointtemperature_mean"])
-                == daily_trend.dewPointTemperatureMean
+                == daily_trend.dewPointTemperatureMean[:14]
             )
-            assert daily_trend_fld["cape_max"] == daily_trend.capeMax
-            assert daily_trend_fld["cape_min"] == daily_trend.capeMin
-            assert daily_trend_fld["cape_mean"] == daily_trend.capeMean
+            assert daily_trend_fld["cape_max"] == daily_trend.capeMax[:14]
+            assert daily_trend_fld["cape_min"] == daily_trend.capeMin[:14]
+            assert daily_trend_fld["cape_mean"] == daily_trend.capeMean[:14]
             assert (
-                approx(daily_trend_fld["liftedindex_max"]) == daily_trend.liftedIndexMax
+                approx(daily_trend_fld["liftedindex_max"])
+                == daily_trend.liftedIndexMax[:14]
             )
             assert (
-                approx(daily_trend_fld["liftedindex_min"]) == daily_trend.liftedIndexMin
+                approx(daily_trend_fld["liftedindex_min"])
+                == daily_trend.liftedIndexMin[:14]
             )
             assert (
                 approx(daily_trend_fld["liftedindex_mean"])
-                == daily_trend.liftedIndexMean
+                == daily_trend.liftedIndexMean[:14]
             )
             assert (
                 approx(daily_trend_fld["evapotranspiration"])
-                == daily_trend.evapoTranspiration
+                == daily_trend.evapoTranspiration[:14]
             )
             assert (
                 approx(daily_trend_fld["referenceevapotranspiration_fao"])
-                == daily_trend.referenceEvapoTranspirationFao
+                == daily_trend.referenceEvapoTranspirationFao[:14]
             )

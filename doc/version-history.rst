@@ -8,6 +8,7 @@ v0.3.2
 ======
 * Remove api key from log.
 * Remove unnecessary log messages for fixing data length.
+* Add workaround to truncate data to 336 and 14 for hourly and daily trends.
 
 v0.3.1
 ======

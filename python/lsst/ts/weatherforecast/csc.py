@@ -19,7 +19,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-__all__ = ["WeatherForecastCSC", "execute_csc"]
+__all__ = [
+    "WeatherForecastCSC",
+    "execute_csc",
+    "GUARANTEED_DAILY_TREND_LENGTH",
+    "GUARANTEED_HOURLY_TREND_LENGTH",
+]
 
 import asyncio
 import datetime
@@ -42,6 +47,8 @@ FORMAT = "json"
 REQUEST_URL = "/packages/trendpro-1h_trendpro-day"
 COUNT_HOURLY = 382
 COUNT_DAILY = 15
+GUARANTEED_HOURLY_TREND_LENGTH = 336
+GUARANTEED_DAILY_TREND_LENGTH = 14
 
 
 def execute_csc():
@@ -149,7 +156,7 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
         timestamp = datetime.datetime.strptime(timestamp, "%Y-%m-%d %H:%M").timestamp()
         return timestamp
 
-    def fix_data_length(self, lst, match):
+    def fix_data_length(self, lst, match, guaranteed_length):
         """Pad the data with default values.
 
         MeteoBlue's API sometimes returns inconsistent count of values.
@@ -162,15 +169,18 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
         match : `int`
             The count to match the length of the list to.
             Hourly trend is 382 and daily trend is 15.
+        guaranteed_length : `int`
+            Set the array to only use the guaranteed length.
 
         Returns
         -------
         lst : `list`
             The corrected count list of values.
         """
-        self.log.info("Attempting to pad data in order to continue.")
+        # FIXME DM-38397 remove workarounds once XML is changed to 336 hours
+        # and 14 day lengths.
+        lst = lst[:guaranteed_length]
         if len(lst) > match:
-            self.log.info("Ignoring excess values.")
             lst = lst[:match]
             return lst
         if isinstance(lst[0], int):
@@ -198,9 +208,7 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                     if self.simulation_mode
                     else SITE_URL
                 )
-                self.log.info(
-                    f"{site_url=}, {LATITUDE=}, {LONGITUDE=}, {self.api_key=}"
-                )
+                self.log.info(f"{site_url=}, {LATITUDE=}, {LONGITUDE=}")
                 params = {"lat": LATITUDE, "lon": LONGITUDE, "apikey": self.api_key}
                 async with aiohttp.ClientSession(
                     site_url, raise_for_status=True
@@ -230,19 +238,16 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                 trend_hour_fld = response["trend_1h"]
                 # check for None in extraTerrestrialRadiationBackwards
                 trend_hour_fld["extraterrestrialradiation_backwards"] = [
-                    0.0 if value is None else value
+                    math.nan if value is None else value
                     for value in trend_hour_fld["extraterrestrialradiation_backwards"]
                 ]
                 for name, values in trend_hour_fld.items():
-                    if len(values) == COUNT_HOURLY:
-                        pass
-                    else:
-                        self.log.warning(
-                            f"Count of {name} = {len(values)}, setting it to {COUNT_HOURLY}."
-                        )
-                        trend_hour_fld[name] = self.fix_data_length(
-                            values, COUNT_HOURLY
-                        )
+                    self.log.warning(
+                        f"Count of {name} = {len(values)}, setting it to {COUNT_HOURLY}."
+                    )
+                    trend_hour_fld[name] = self.fix_data_length(
+                        values, COUNT_HOURLY, GUARANTEED_HOURLY_TREND_LENGTH
+                    )
                 timestamps = trend_hour_fld["time"]
                 converted_timestamps = [
                     self.convert_time(timestamp) for timestamp in timestamps
@@ -286,15 +291,12 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                 )
                 trend_daily_fld = response["trend_day"]
                 for name, values in trend_daily_fld.items():
-                    if len(values) == COUNT_DAILY:
-                        pass
-                    else:
-                        self.log.error(
-                            f"Count of {name} = {len(values)}, setting it to {COUNT_DAILY}."
-                        )
-                        trend_daily_fld[name] = self.fix_data_length(
-                            values, COUNT_DAILY
-                        )
+                    self.log.error(
+                        f"Count of {name} = {len(values)}, setting it to {COUNT_DAILY}."
+                    )
+                    trend_daily_fld[name] = self.fix_data_length(
+                        values, COUNT_DAILY, GUARANTEED_DAILY_TREND_LENGTH
+                    )
                 timestamps = trend_daily_fld["time"]
                 converted_timestamps = [
                     self.convert_time(timestamp) for timestamp in timestamps

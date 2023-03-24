@@ -167,3 +167,7 @@ cython_debug/
 .sconf_temp
 _build
 py-api
+.pre-commit-config.yaml
+.flake8
+.isort.cfg
+.mypy.ini

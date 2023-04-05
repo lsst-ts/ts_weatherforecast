@@ -11,6 +11,8 @@ v0.3.2
 * Add workaround to truncate data to 336 and 14 for hourly and daily trends.
 * Use DevelopPipeline.
 * Use generate_pre_commit_conf.
+* Remove workaround
+* Cleanup log messages
 
 v0.3.1
 ======

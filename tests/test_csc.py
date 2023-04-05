@@ -26,7 +26,6 @@ import pathlib
 import re
 import unittest
 
-import numpy as np
 from lsst.ts import salobj, weatherforecast
 from pytest import approx
 
@@ -73,10 +72,6 @@ class WeatherForecastCSCTestCase(
             name = re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
             if name in expected:
                 assert values[:length] == approx(expected[name][:length])
-                if isinstance(values[0], float):
-                    assert np.isnan(values[length:]).all()
-                elif isinstance(values[0], int):
-                    assert values[length:] == [-1] * (len(expected[name]) - length)
             elif name == "timestamp":
                 converted_timestamps = [
                     datetime.datetime.strptime(timestamp, "%Y-%m-%d %H:%M").timestamp()
@@ -87,30 +82,20 @@ class WeatherForecastCSCTestCase(
                 pass
             elif name2 in expected:
                 assert values[:length] == approx(expected[name2][:length])
-                if isinstance(values[0], float):
-                    assert np.isnan(values[length:]).all()
-                elif isinstance(values[0], int):
-                    assert values[length:] == [-1] * (len(expected[name2]) - length)
             elif name == "extra_terrestrial_radiation_backwards":
                 assert values[:length] == approx(
                     expected["extraterrestrialradiation_backwards"][:length]
                 )
-                assert np.isnan(values[length:]).all()
             elif name == "total_cloud_cover_spread":
                 assert values[:length] == approx(
                     expected["totalcloudcover_spread"][:length]
                 )
-                assert values[length:] == [-1] * (
-                    len(expected["totalcloudcover_spread"]) - length
-                )
             elif name == "high_clouds":
                 assert values[:length] == approx(expected["hiclouds"][:length])
-                assert values[length:] == [-1] * (len(expected["hiclouds"]) - length)
             elif name == "reference_evapo_transpiration_fao":
                 assert values[:length] == approx(
                     expected["referenceevapotranspiration_fao"][:length]
                 )
-                assert np.isnan(values[length:]).all()
             else:
                 missing_names.append(name)
 

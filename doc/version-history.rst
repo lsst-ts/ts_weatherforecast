@@ -4,6 +4,20 @@
 Version History
 ===============
 
+v0.3.3
+======
+* Pin aiohttp to above or equal to 3.8.
+
+v0.3.2
+======
+* Remove api key from log.
+* Remove unnecessary log messages for fixing data length.
+* Add workaround to truncate data to 336 and 14 for hourly and daily trends.
+* Use DevelopPipeline.
+* Use generate_pre_commit_conf.
+* Remove workaround
+* Cleanup log messages
+
 v0.3.1
 ======
 * Add count check to trend_daily and hourly fields.

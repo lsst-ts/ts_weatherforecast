@@ -19,7 +19,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-__all__ = ["WeatherForecastCSC", "execute_csc"]
+__all__ = [
+    "WeatherForecastCSC",
+    "execute_csc",
+    "GUARANTEED_DAILY_TREND_LENGTH",
+    "GUARANTEED_HOURLY_TREND_LENGTH",
+]
 
 import asyncio
 import datetime
@@ -42,6 +47,8 @@ FORMAT = "json"
 REQUEST_URL = "/packages/trendpro-1h_trendpro-day"
 COUNT_HOURLY = 382
 COUNT_DAILY = 15
+GUARANTEED_HOURLY_TREND_LENGTH = 336
+GUARANTEED_DAILY_TREND_LENGTH = 14
 
 
 def execute_csc():
@@ -149,41 +156,6 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
         timestamp = datetime.datetime.strptime(timestamp, "%Y-%m-%d %H:%M").timestamp()
         return timestamp
 
-    def fix_data_length(self, lst, match):
-        """Pad the data with default values.
-
-        MeteoBlue's API sometimes returns inconsistent count of values.
-        This method is an attempt to sanitize the data.
-
-        Parameters
-        ----------
-        lst : `list`
-            List of values to pad out.
-        match : `int`
-            The count to match the length of the list to.
-            Hourly trend is 382 and daily trend is 15.
-
-        Returns
-        -------
-        lst : `list`
-            The corrected count list of values.
-        """
-        self.log.info("Attempting to pad data in order to continue.")
-        if len(lst) > match:
-            self.log.info("Ignoring excess values.")
-            lst = lst[:match]
-            return lst
-        if isinstance(lst[0], int):
-            lst.extend([-1] * (match - len(lst)))
-        elif isinstance(lst[0], float):
-            lst.extend([math.nan] * (match - len(lst)))
-        elif isinstance(lst[0], str):
-            lst.extend(["1970-01-01 00:00"] * (match - len(lst)))
-        else:
-            raise RuntimeError(f"Unable to pad type {type(lst[0])}.")
-        lst = lst[:match]
-        return lst
-
     async def telemetry(self):
         """Implement telemetry loop.
 
@@ -198,9 +170,7 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                     if self.simulation_mode
                     else SITE_URL
                 )
-                self.log.info(
-                    f"{site_url=}, {LATITUDE=}, {LONGITUDE=}, {self.api_key=}"
-                )
+                self.log.info(f"{site_url=}, {LATITUDE=}, {LONGITUDE=}")
                 params = {"lat": LATITUDE, "lon": LONGITUDE, "apikey": self.api_key}
                 async with aiohttp.ClientSession(
                     site_url, raise_for_status=True
@@ -227,74 +197,58 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                     modelrun=modelrun_utc,
                     modelrunUpdatetime=modelrun_updatetime_utc,
                 )
-                trend_hour_fld = response["trend_1h"]
+                trend_hourly_fld = response["trend_1h"]
                 # check for None in extraTerrestrialRadiationBackwards
-                trend_hour_fld["extraterrestrialradiation_backwards"] = [
-                    0.0 if value is None else value
-                    for value in trend_hour_fld["extraterrestrialradiation_backwards"]
+                trend_hourly_fld["extraterrestrialradiation_backwards"] = [
+                    math.nan if value is None else value
+                    for value in trend_hourly_fld["extraterrestrialradiation_backwards"]
                 ]
-                for name, values in trend_hour_fld.items():
-                    if len(values) == COUNT_HOURLY:
-                        pass
-                    else:
-                        self.log.warning(
-                            f"Count of {name} = {len(values)}, setting it to {COUNT_HOURLY}."
-                        )
-                        trend_hour_fld[name] = self.fix_data_length(
-                            values, COUNT_HOURLY
-                        )
-                timestamps = trend_hour_fld["time"]
+                for name, values in trend_hourly_fld.items():
+                    trend_hourly_fld[name] = values[:GUARANTEED_HOURLY_TREND_LENGTH]
+                timestamps = trend_hourly_fld["time"]
                 converted_timestamps = [
                     self.convert_time(timestamp) for timestamp in timestamps
                 ]
                 await self.tel_hourlyTrend.set_write(
                     timestamp=converted_timestamps,
-                    temperature=trend_hour_fld["temperature"],
-                    temperatureSpread=trend_hour_fld["temperature_spread"],
-                    precipitation=trend_hour_fld["precipitation"],
-                    precipitationSpread=trend_hour_fld["precipitation_spread"],
-                    windspeed=trend_hour_fld["windspeed"],
-                    windspeedSpread=trend_hour_fld["windspeed_spread"],
-                    windDirection=trend_hour_fld["winddirection"],
-                    seaLevelPressure=trend_hour_fld["sealevelpressure"],
-                    relativeHumidity=trend_hour_fld["relativehumidity"],
-                    ghiBackwards=trend_hour_fld["ghi_backwards"],
-                    extraTerrestrialRadiationBackwards=trend_hour_fld[
+                    temperature=trend_hourly_fld["temperature"],
+                    temperatureSpread=trend_hourly_fld["temperature_spread"],
+                    precipitation=trend_hourly_fld["precipitation"],
+                    precipitationSpread=trend_hourly_fld["precipitation_spread"],
+                    windspeed=trend_hourly_fld["windspeed"],
+                    windspeedSpread=trend_hourly_fld["windspeed_spread"],
+                    windDirection=trend_hourly_fld["winddirection"],
+                    seaLevelPressure=trend_hourly_fld["sealevelpressure"],
+                    relativeHumidity=trend_hourly_fld["relativehumidity"],
+                    ghiBackwards=trend_hourly_fld["ghi_backwards"],
+                    extraTerrestrialRadiationBackwards=trend_hourly_fld[
                         "extraterrestrialradiation_backwards"
                     ],
-                    totalCloudCover=trend_hour_fld["totalcloudcover"],
-                    totalCloudCoverSpread=trend_hour_fld["totalcloudcover_spread"],
-                    snowFraction=trend_hour_fld["snowfraction"],
-                    pictocode=trend_hour_fld["pictocode"],
-                    gust=trend_hour_fld["gust"],
-                    lowClouds=trend_hour_fld["lowclouds"],
-                    midClouds=trend_hour_fld["midclouds"],
-                    highClouds=trend_hour_fld["hiclouds"],
-                    sunshineTime=trend_hour_fld["sunshinetime"],
-                    visibility=trend_hour_fld["visibility"],
-                    skinTemperature=trend_hour_fld["skintemperature"],
-                    dewPointTemperature=trend_hour_fld["dewpointtemperature"],
-                    precipitationProbability=trend_hour_fld[
+                    totalCloudCover=trend_hourly_fld["totalcloudcover"],
+                    totalCloudCoverSpread=trend_hourly_fld["totalcloudcover_spread"],
+                    snowFraction=trend_hourly_fld["snowfraction"],
+                    pictocode=trend_hourly_fld["pictocode"],
+                    gust=trend_hourly_fld["gust"],
+                    lowClouds=trend_hourly_fld["lowclouds"],
+                    midClouds=trend_hourly_fld["midclouds"],
+                    highClouds=trend_hourly_fld["hiclouds"],
+                    sunshineTime=trend_hourly_fld["sunshinetime"],
+                    visibility=trend_hourly_fld["visibility"],
+                    skinTemperature=trend_hourly_fld["skintemperature"],
+                    dewPointTemperature=trend_hourly_fld["dewpointtemperature"],
+                    precipitationProbability=trend_hourly_fld[
                         "precipitation_probability"
                     ],
-                    cape=trend_hour_fld["cape"],
-                    liftedIndex=trend_hour_fld["liftedindex"],
-                    evapoTranspiration=trend_hour_fld["evapotranspiration"],
-                    referenceEvapoTranspirationFao=trend_hour_fld[
+                    cape=trend_hourly_fld["cape"],
+                    liftedIndex=trend_hourly_fld["liftedindex"],
+                    evapoTranspiration=trend_hourly_fld["evapotranspiration"],
+                    referenceEvapoTranspirationFao=trend_hourly_fld[
                         "referenceevapotranspiration_fao"
                     ],
                 )
                 trend_daily_fld = response["trend_day"]
                 for name, values in trend_daily_fld.items():
-                    if len(values) == COUNT_DAILY:
-                        pass
-                    else:
-                        self.log.error(
-                            f"Count of {name} = {len(values)}, setting it to {COUNT_DAILY}."
-                        )
-                        trend_daily_fld[name] = self.fix_data_length(
-                            values, COUNT_DAILY
-                        )
+                    trend_daily_fld[name] = values[:GUARANTEED_DAILY_TREND_LENGTH]
                 timestamps = trend_daily_fld["time"]
                 converted_timestamps = [
                     self.convert_time(timestamp) for timestamp in timestamps
@@ -370,8 +324,6 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                 await asyncio.sleep(self.interval)
             except Exception:
                 self.log.exception("Telemetry loop failed.")
-                # wait an amount of time to try again
-                # FIXME DM-37577
                 await asyncio.sleep(self.tel_loop_error_wait_time)
 
     async def handle_summary_state(self):

@@ -26,7 +26,6 @@ test:
         - ts-dds
         - ts-idl {{ idl_version }}
         - ts-salobj {{ salobj_version }}
-        - aiohttp
     source_files:
         - python
         - tests
@@ -45,9 +44,8 @@ requirements:
         - setuptools_scm
         - setuptools
         - ts-conda-build =0.3
-        - aiohttp
     run:
         - python {{ python }}
         - ts-salobj
         - ts-idl
-        - aiohttp
+        - aiohttp >=3.8

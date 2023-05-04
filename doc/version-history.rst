@@ -4,6 +4,10 @@
 Version History
 ===============
 
+v0.3.3
+======
+* Pin aiohttp to above or equal to 3.8.
+
 v0.3.2
 ======
 * Remove api key from log.

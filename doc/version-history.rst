@@ -4,6 +4,8 @@
 Version History
 ===============
 
+.. towncrier release notes start
+
 v0.3.3
 ======
 * Pin aiohttp to above or equal to 3.8.

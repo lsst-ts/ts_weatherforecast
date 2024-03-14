@@ -188,14 +188,15 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                 modelrun_updatetime_utc = datetime.datetime.strptime(
                     metadata_fld["modelrun_updatetime_utc"], "%Y-%m-%d %H:%M"
                 ).timestamp()
+                # FIXME DM-43325 Remove str conversion once XML is updated.
                 await self.tel_metadata.set_write(
                     latitude=metadata_fld["latitude"],
                     longitude=metadata_fld["longitude"],
                     height=metadata_fld["height"],
                     timezoneAbbrevation=metadata_fld["timezone_abbrevation"],
                     timeOffset=int(metadata_fld["utc_timeoffset"]),
-                    modelrun=modelrun_utc,
-                    modelrunUpdatetime=modelrun_updatetime_utc,
+                    modelrun=str(modelrun_utc),
+                    modelrunUpdatetime=str(modelrun_updatetime_utc),
                 )
                 trend_hourly_fld = response["trend_1h"]
                 # check for None in extraTerrestrialRadiationBackwards
@@ -231,7 +232,7 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                     gust=trend_hourly_fld["gust"],
                     lowClouds=trend_hourly_fld["lowclouds"],
                     midClouds=trend_hourly_fld["midclouds"],
-                    highClouds=trend_hourly_fld["hiclouds"],
+                    highClouds=trend_hourly_fld["highclouds"],
                     sunshineTime=trend_hourly_fld["sunshinetime"],
                     visibility=trend_hourly_fld["visibility"],
                     skinTemperature=trend_hourly_fld["skintemperature"],

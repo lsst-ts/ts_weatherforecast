@@ -67,7 +67,7 @@ class WeatherForecastCSCTestCase(
 
     def check_arrays(self, response, expected, length):
         missing_names = []
-        for name, values in response.get_vars().items():
+        for name, values in vars(response).items():
             name2 = name.lower()
             name = re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
             if name in expected:

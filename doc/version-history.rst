@@ -6,6 +6,27 @@ Version History
 
 .. towncrier release notes start
 
+ts_weatherforecast v0.4.0 (2024-03-14)
+======================================
+
+Features
+--------
+
+- Change hiclouds to highclouds in meteoblue API. (`DM-43292 <https://jira.lsstcorp.org/DM-43292>`_)
+
+
+Bugfixes
+--------
+
+- Correct modelrun and modelrunUpdateTime to be strings instead of floats. (`DM-43292 <https://jira.lsstcorp.org/DM-43292>`_)
+
+
+Improved Documentation
+----------------------
+
+- Add towncrier support. (`DM-43292 <https://jira.lsstcorp.org/DM-43292>`_)
+
+
 v0.3.3
 ======
 * Pin aiohttp to above or equal to 3.8.

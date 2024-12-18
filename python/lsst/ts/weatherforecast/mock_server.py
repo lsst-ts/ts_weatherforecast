@@ -100,7 +100,7 @@ class MockServer:
             self.runner = None
             await runner.cleanup()
 
-    def get_forecast(self, request):
+    async def get_forecast(self, request):
         """Return the canned json response.
 
         Parameters

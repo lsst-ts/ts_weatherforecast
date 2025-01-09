@@ -170,7 +170,7 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                 time = datetime.datetime(
                     year=2024, month=12, day=1, hour=4, minute=0, second=0
                 )
-            if time.hour == 4 or time.hour == 16:
+            if time.hour == 4 or time.hour == 16 or not self.tel_hourlyTrend.has_data:
                 try:
                     site_url = (
                         f"http://127.0.0.1:{self.mock_server.port}"
@@ -344,7 +344,7 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                     self.log.exception("Telemetry loop failed.")
                     await asyncio.sleep(self.tel_loop_error_wait_time)
             else:
-                await asyncio.sleep(10)
+                await asyncio.sleep(3600)
 
     async def handle_summary_state(self):
         """Handle summary state transitions.

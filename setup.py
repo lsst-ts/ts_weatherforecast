@@ -19,12 +19,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from importlib.metadata import version
+from importlib import metadata
 
 import setuptools
 import setuptools_scm
 
-scm_version = version("setuptools_scm")
+scm_version = metadata.version("setuptools_scm")
 
 if scm_version.startswith("8"):
     setuptools.setup(

@@ -35,9 +35,9 @@ import os
 import aiohttp
 from lsst.ts import salobj, utils
 
+from . import __version__
 from .config_schema import CONFIG_SCHEMA
 from .mock_server import MockServer
-from .version import __version__
 
 LATITUDE = -30.24
 LONGITUDE = -70.336
@@ -79,6 +79,7 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
         * 0 - real mode
         * 1 - simulated data
         * 2 - simulated missing data
+        * 3 - simulate bad calls to server.
 
     Attributes
     ----------
@@ -94,15 +95,6 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
         The wait time for retrying if the API call fails.
     api_key : `str`
         The stored API key for Meteoblue received from an environment variable.
-
-    Notes
-    -----
-
-    Simulation mode has three values.
-
-    * 0 - real data mode.
-    * 1 - Simulated data mode.
-    * 2 - Missing data mode.
     """
 
     valid_simulation_modes = (0, 1, 2, 3)

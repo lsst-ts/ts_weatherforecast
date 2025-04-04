@@ -1,0 +1,1 @@
+Changed interval to update forecast at 4am and 4pm.

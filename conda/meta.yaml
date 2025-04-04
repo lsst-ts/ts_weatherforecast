@@ -1,7 +1,8 @@
-{% set data= load_setup_py_data() %}
+{% set data = load_setup_py_data() %}
+{% set version = data.get('version') %}
 package:
     name: ts-weatherforecast
-    version: {{ data.get('version') }}
+    version: {{ version }}
 
 source:
     path: ../
@@ -15,7 +16,6 @@ build:
 test:
     requires:
         - ts-conda-build =0.4
-        - ts-dds
         - ts-idl {{ idl_version }}
         - ts-salobj {{ salobj_version }}
     source_files:

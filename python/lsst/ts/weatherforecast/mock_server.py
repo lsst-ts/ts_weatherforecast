@@ -52,13 +52,17 @@ class MockServer:
     """
 
     def __init__(
-        self, port=0, data="python/lsst/ts/weatherforecast/data/forecast-test.json"
+        self,
+        port=0,
+        data="python/lsst/ts/weatherforecast/data/forecast-test.json",
+        bad_request=False,
     ) -> None:
         self.port = port
         self.runner = None
         self.site = None
         test_file = pathlib.Path(data)
         self.bad_request_counter = 0
+        self.bad_request = bad_request
         self.log = logging.getLogger(__name__)
         with open(test_file) as f:
             self.response = json.load(f)
@@ -100,7 +104,7 @@ class MockServer:
             self.runner = None
             await runner.cleanup()
 
-    def get_forecast(self, request):
+    async def get_forecast(self, request):
         """Return the canned json response.
 
         Parameters
@@ -114,7 +118,7 @@ class MockServer:
             The canned json response.
             See the test file in the data directory for the format.
         """
-        if self.bad_request_counter <= 3:
+        if self.bad_request:
             self.log.info(f"Inside bad request check. {self.bad_request_counter=}")
             self.bad_request_counter += 1
             raise web.HTTPBadRequest(reason="Something went wrong.")

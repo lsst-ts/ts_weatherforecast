@@ -63,7 +63,16 @@ class WeatherForecastCSCTestCase(
             simulation_mode=2,
             config_dir=TEST_CONFIG_DIR,
         ):
-            await self.remote.tel_hourlyTrend.aget(timeout=45)
+            await self.assert_next_sample(topic=self.remote.tel_hourlyTrend)
+
+    async def test_bad_request(self):
+        async with self.make_csc(
+            initial_state=salobj.State.ENABLED,
+            simulation_mode=3,
+            config_dir=TEST_CONFIG_DIR,
+        ):
+            await self.assert_next_summary_state(state=salobj.State.ENABLED)
+            await self.assert_next_summary_state(state=salobj.State.FAULT, flush=True)
 
     def check_arrays(self, response, expected, length):
         missing_names = []
@@ -108,15 +117,19 @@ class WeatherForecastCSCTestCase(
             simulation_mode=1,
             config_dir=TEST_CONFIG_DIR,
         ):
-            metadata = await self.remote.tel_metadata.aget(timeout=45)
+            metadata = await self.assert_next_sample(topic=self.remote.tel_metadata)
             assert approx(-30.24) == metadata.latitude
             assert approx(-70.34) == metadata.longitude
             assert 2298 == metadata.height
             assert "GMT-03" == metadata.timezoneAbbrevation
             assert -3 == metadata.timeOffset
 
-            hourly_trend = await self.remote.tel_hourlyTrend.aget(timeout=10)
-            daily_trend = await self.remote.tel_dailyTrend.aget(timeout=10)
+            hourly_trend = await self.assert_next_sample(
+                topic=self.remote.tel_hourlyTrend
+            )
+            daily_trend = await self.assert_next_sample(
+                topic=self.remote.tel_dailyTrend
+            )
             with open(test_file) as f:
                 df = json.load(f)
 

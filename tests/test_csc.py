@@ -71,6 +71,7 @@ class WeatherForecastCSCTestCase(
             simulation_mode=3,
             config_dir=TEST_CONFIG_DIR,
         ):
+            await self.assert_next_summary_state(state=salobj.State.ENABLED)
             await self.assert_next_summary_state(state=salobj.State.FAULT, flush=True)
 
     def check_arrays(self, response, expected, length):

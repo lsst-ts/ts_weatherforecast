@@ -35,9 +35,9 @@ import os
 import aiohttp
 from lsst.ts import salobj, utils
 
-from . import __version__
 from .config_schema import CONFIG_SCHEMA
 from .mock_server import MockServer
+from .version import __version__
 
 LATITUDE = -30.24
 LONGITUDE = -70.336
@@ -425,4 +425,4 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
             if self.mock_server is not None:
                 server = self.mock_server
                 self.mock_server = None
-                await server.stop()
+                await server.cleanup()

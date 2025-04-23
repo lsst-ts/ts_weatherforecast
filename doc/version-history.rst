@@ -6,6 +6,22 @@ Version History
 
 .. towncrier release notes start
 
+ts_weatherforecast v0.5.0 (2025-04-23)
+======================================
+
+Features
+--------
+
+- Changed interval to update forecast at 4am and 4pm. (`DM-47997 <https://rubinobs.atlassian.net/DM-47997>`_)
+
+
+Bugfixes
+--------
+
+- Update ts-conda-build to 0.4. (`DM-43486 <https://rubinobs.atlassian.net/DM-43486>`_)
+- Go to fault state when retry exceeds max retries. (`DM-47997 <https://rubinobs.atlassian.net/DM-47997>`_)
+
+
 ts_weatherforecast v0.4.0 (2024-03-14)
 ======================================
 

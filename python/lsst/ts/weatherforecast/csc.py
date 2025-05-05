@@ -126,6 +126,7 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
         self.retries = 0
         self.already_updated = False
         self.first_time = True
+        self.asl = 2650
         self.api_key = os.getenv("METEOBLUE_API_KEY")
         if self.api_key is None:
             raise RuntimeError("METEOBLUE_API_KEY must be defined.")
@@ -186,7 +187,12 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                         else SITE_URL
                     )
                     self.log.info(f"{site_url=}, {LATITUDE=}, {LONGITUDE=}")
-                    params = {"lat": LATITUDE, "lon": LONGITUDE, "apikey": self.api_key}
+                    params = {
+                        "lat": LATITUDE,
+                        "lon": LONGITUDE,
+                        "apikey": self.api_key,
+                        "asl": self.asl,
+                    }
                     self.log.info("Querying Meteoblue.")
                     async with aiohttp.ClientSession(
                         site_url, raise_for_status=True

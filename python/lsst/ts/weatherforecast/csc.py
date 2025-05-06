@@ -40,8 +40,8 @@ from .config_schema import CONFIG_SCHEMA
 from .mock_server import MockServer
 
 LATITUDE = -30.24
-LONGITUDE = -70.336
-ELEVATION = 2925
+LONGITUDE = -70.749
+ELEVATION = 2650
 TIMEZONE = "America/Santiago"
 SITE_URL = "https://my.meteoblue.com"
 FORMAT = "json"
@@ -126,7 +126,6 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
         self.retries = 0
         self.already_updated = False
         self.first_time = True
-        self.asl = 2650
         self.api_key = os.getenv("METEOBLUE_API_KEY")
         if self.api_key is None:
             raise RuntimeError("METEOBLUE_API_KEY must be defined.")
@@ -191,7 +190,7 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                         "lat": LATITUDE,
                         "lon": LONGITUDE,
                         "apikey": self.api_key,
-                        "asl": self.asl,
+                        "asl": ELEVATION,
                     }
                     self.log.info("Querying Meteoblue.")
                     async with aiohttp.ClientSession(

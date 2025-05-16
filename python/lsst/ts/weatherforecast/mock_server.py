@@ -53,21 +53,21 @@ class MockServer:
 
     def __init__(
         self,
-        port=0,
-        data="python/lsst/ts/weatherforecast/data/forecast-test.json",
-        bad_request=False,
+        port: int = 0,
+        data: str = "python/lsst/ts/weatherforecast/data/forecast-test.json",
+        bad_request: bool = False,
     ) -> None:
-        self.port = port
-        self.runner = None
-        self.site = None
-        test_file = pathlib.Path(data)
-        self.bad_request_counter = 0
-        self.bad_request = bad_request
-        self.log = logging.getLogger(__name__)
+        self.port: int = port
+        self.runner: None | web.AppRunner = None
+        self.site: None | web.TCPSite = None
+        test_file: pathlib.Path = pathlib.Path(data)
+        self.bad_request_counter: int = 0
+        self.bad_request: bool = bad_request
+        self.log: logging.Logger = logging.getLogger(__name__)
         with open(test_file) as f:
-            self.response = json.load(f)
+            self.response: dict = json.load(f)
 
-    def make_app(self):
+    def make_app(self) -> web.Application:
         """Make the app.
 
         Returns
@@ -79,32 +79,25 @@ class MockServer:
         app.add_routes([web.get(REQUEST_URL, self.get_forecast)])
         return app
 
-    async def start(self):
+    async def start(self) -> None:
         """Start the server."""
         if self.runner is not None:
             raise RuntimeError("Application already started.")
-        app = self.make_app()
+        app: web.Application = self.make_app()
         self.runner = web.AppRunner(app)
         await self.runner.setup()
-        self.site = web.TCPSite(self.runner, "127.0.0.1", port=self.port)
+        self.site = web.TCPSite(self.runner, "127.0.0.1", reuse_port=True)
         await self.site.start()
-        if self.port == 0:
-            server = self.site._server
-            if len(server.sockets) != 1:
-                raise RuntimeError(
-                    "Serving on more than one socket; cannot determine the port."
-                )
-            self.port = server.sockets[0].getsockname()[1]
-        self.url = f"http://127.0.0.1:{self.port}"
+        self.url = self.site.name
 
-    async def cleanup(self):
+    async def cleanup(self) -> None:
         """Clean up the server."""
         if self.runner is not None:
             runner = self.runner
             self.runner = None
             await runner.cleanup()
 
-    async def get_forecast(self, request):
+    async def get_forecast(self, request: web.Request) -> web.Response:
         """Return the canned json response.
 
         Parameters

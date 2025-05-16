@@ -25,39 +25,41 @@ import os
 import pathlib
 import re
 import unittest
+import typing
 
 from lsst.ts import salobj, weatherforecast
 from pytest import approx
 
 TEST_CONFIG_DIR = pathlib.Path(__file__).parents[1].joinpath("tests", "data", "config")
+TIMEOUT = 60
 
 
-class WeatherForecastCSCTestCase(
-    salobj.BaseCscTestCase, unittest.IsolatedAsyncioTestCase
-):
+class WeatherForecastCSCTestCase(salobj.BaseCscTestCase, unittest.IsolatedAsyncioTestCase):
     """Run WeatherForecastCSC test case."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         """Setup the test with LSST_SITE environment value"""
         os.environ["LSST_SITE"] = "weatherforecast"
         os.environ["METEOBLUE_API_KEY"] = "test"
         return super().setUp()
 
     def basic_make_csc(
-        self, initial_state, config_dir=TEST_CONFIG_DIR, simulation_mode=1, **kwargs
-    ):
+        self,
+        initial_state: salobj.State,
+        config_dir: pathlib.Path = TEST_CONFIG_DIR,
+        simulation_mode: int = 1,
+        **kwargs: typing.Any,
+    ) -> weatherforecast.csc.WeatherForecastCSC:
         return weatherforecast.csc.WeatherForecastCSC(
             initial_state=initial_state,
             simulation_mode=simulation_mode,
             config_dir=config_dir,
         )
 
-    async def test_bin_script(self):
-        await self.check_bin_script(
-            name="WeatherForecast", index=False, exe_name="run_weatherforecast"
-        )
+    async def test_bin_script(self) -> None:
+        await self.check_bin_script(name="WeatherForecast", index=False, exe_name="run_weatherforecast")
 
-    async def test_missing_forecast(self):
+    async def test_missing_forecast(self) -> None:
         async with self.make_csc(
             initial_state=salobj.State.ENABLED,
             simulation_mode=2,
@@ -65,16 +67,16 @@ class WeatherForecastCSCTestCase(
         ):
             await self.assert_next_sample(topic=self.remote.tel_hourlyTrend)
 
-    async def test_bad_request(self):
+    async def test_bad_request(self) -> None:
         async with self.make_csc(
             initial_state=salobj.State.ENABLED,
             simulation_mode=3,
             config_dir=TEST_CONFIG_DIR,
         ):
             await self.assert_next_summary_state(state=salobj.State.ENABLED)
-            await self.assert_next_summary_state(state=salobj.State.FAULT, flush=True)
+            await self.assert_next_summary_state(state=salobj.State.FAULT)
 
-    def check_arrays(self, response, expected, length):
+    def check_arrays(self, response: dict, expected: dict, length: int) -> None:
         missing_names = []
         for name, values in vars(response).items():
             name2 = name.lower()
@@ -92,26 +94,18 @@ class WeatherForecastCSCTestCase(
             elif name2 in expected:
                 assert values[:length] == approx(expected[name2][:length])
             elif name == "extra_terrestrial_radiation_backwards":
-                assert values[:length] == approx(
-                    expected["extraterrestrialradiation_backwards"][:length]
-                )
+                assert values[:length] == approx(expected["extraterrestrialradiation_backwards"][:length])
             elif name == "total_cloud_cover_spread":
-                assert values[:length] == approx(
-                    expected["totalcloudcover_spread"][:length]
-                )
+                assert values[:length] == approx(expected["totalcloudcover_spread"][:length])
             elif name == "high_clouds":
                 assert values[:length] == approx(expected["hiclouds"][:length])
             elif name == "reference_evapo_transpiration_fao":
-                assert values[:length] == approx(
-                    expected["referenceevapotranspiration_fao"][:length]
-                )
+                assert values[:length] == approx(expected["referenceevapotranspiration_fao"][:length])
             else:
                 missing_names.append(name)
 
-    async def test_telemetry(self):
-        test_file = pathlib.Path(
-            "python/lsst/ts/weatherforecast/data/forecast-test.json"
-        )
+    async def test_telemetry(self) -> None:
+        test_file = pathlib.Path("python/lsst/ts/weatherforecast/data/forecast-test.json")
         async with self.make_csc(
             initial_state=salobj.State.ENABLED,
             simulation_mode=1,
@@ -124,12 +118,8 @@ class WeatherForecastCSCTestCase(
             assert "GMT-03" == metadata.timezoneAbbrevation
             assert -3 == metadata.timeOffset
 
-            hourly_trend = await self.assert_next_sample(
-                topic=self.remote.tel_hourlyTrend
-            )
-            daily_trend = await self.assert_next_sample(
-                topic=self.remote.tel_dailyTrend
-            )
+            hourly_trend = await self.assert_next_sample(topic=self.remote.tel_hourlyTrend)
+            daily_trend = await self.assert_next_sample(topic=self.remote.tel_dailyTrend)
             with open(test_file) as f:
                 df = json.load(f)
 

@@ -6,6 +6,27 @@ Version History
 
 .. towncrier release notes start
 
+v0.6.0 (2025-05-16)
+===================
+
+New Features
+------------
+
+- Added Above Sea Level to API call to improve accuracy. (`DM-50711 <https://rubinobs.atlassian.net//browse/DM-50711>`_)
+
+
+Performance Enhancement
+-----------------------
+
+- Changed longitude to use Google Maps location for Cerro Pachon. (`DM-50711 <https://rubinobs.atlassian.net//browse/DM-50711>`_)
+
+
+Other Changes and Additions
+---------------------------
+
+- Added mypy and ruff support. (`DM-50711 <https://rubinobs.atlassian.net//browse/DM-50711>`_)
+
+
 ts_weatherforecast v0.5.0 (2025-04-23)
 ======================================
 

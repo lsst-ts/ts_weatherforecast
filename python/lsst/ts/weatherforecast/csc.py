@@ -168,6 +168,7 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
         self.first_time = True
         self.retries = 0
         while True:
+            response: dict | None = None
             if self.retries >= self.max_retries:
                 await self.fault(code=1, report="Number of retries exceeded max retries.")
                 return
@@ -197,7 +198,7 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                             REQUEST_URL,
                             params=params,
                         ) as resp:
-                            response: dict = await resp.json()
+                            response = await resp.json()
                             self.log.info("Got response.")
                             # self.log.debug(f"{response=}")
                 except asyncio.CancelledError:

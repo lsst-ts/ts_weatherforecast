@@ -31,6 +31,8 @@ import asyncio
 import datetime
 import math
 import os
+import pathlib
+import types
 
 import aiohttp
 from lsst.ts import salobj, utils
@@ -39,25 +41,25 @@ from . import __version__
 from .config_schema import CONFIG_SCHEMA
 from .mock_server import MockServer
 
-LATITUDE = -30.24
-LONGITUDE = -70.749
-ELEVATION = 2650
-TIMEZONE = "America/Santiago"
-SITE_URL = "https://my.meteoblue.com"
-FORMAT = "json"
-REQUEST_URL = "/packages/trendpro-1h_trendpro-day"
-COUNT_HOURLY = 382
-COUNT_DAILY = 15
-GUARANTEED_HOURLY_TREND_LENGTH = 336
-GUARANTEED_DAILY_TREND_LENGTH = 14
+LATITUDE: float = -30.24
+LONGITUDE: float = -70.749
+ELEVATION: int = 2650
+TIMEZONE: str = "America/Santiago"
+SITE_URL: str = "https://my.meteoblue.com"
+FORMAT: str = "json"
+REQUEST_URL: str = "/packages/trendpro-1h_trendpro-day"
+COUNT_HOURLY: int = 382
+COUNT_DAILY: int = 15
+GUARANTEED_HOURLY_TREND_LENGTH: int = 336
+GUARANTEED_DAILY_TREND_LENGTH: int = 14
 
 
-def execute_csc():
+def execute_csc() -> None:
     """Execute the CSC."""
     asyncio.run(WeatherForecastCSC.amain(index=False))
 
 
-def command_csc():
+def command_csc() -> None:
     asyncio.run(salobj.CscCommander.amain(name="WeatherForecast", index=False))
 
 
@@ -97,16 +99,16 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
         The stored API key for Meteoblue received from an environment variable.
     """
 
-    valid_simulation_modes = (0, 1, 2, 3)
-    version = __version__
-    enable_cmdline_state = True
+    valid_simulation_modes: tuple = (0, 1, 2, 3)
+    version: str = __version__
+    enable_cmdline_state: bool = True
 
     def __init__(
         self,
-        initial_state=salobj.State.STANDBY,
-        simulation_mode=0,
-        config_dir=None,
-        override="",
+        initial_state: salobj.State = salobj.State.STANDBY,
+        simulation_mode: int = 0,
+        config_dir: None | pathlib.Path = None,
+        override: str = "",
     ) -> None:
         super().__init__(
             name="WeatherForecast",
@@ -117,29 +119,28 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
             config_dir=config_dir,
             override=override,
         )
-        self.telemetry_task = utils.make_done_future()
-        self.last_hour = None
-        self.interval = 60
-        self.mock_server = None
-        self.tel_loop_error_wait_time = 60
-        self.max_retries = 3
-        self.retries = 0
-        self.already_updated = False
-        self.first_time = True
-        self.api_key = os.getenv("METEOBLUE_API_KEY")
+        self.telemetry_task: asyncio.Future = utils.make_done_future()
+        self.last_hour: None | int = None
+        self.interval: int = 60
+        self.mock_server: None | MockServer = None
+        self.tel_loop_error_wait_time: int = 60
+        self.max_retries: int = 3
+        self.retries: int = 0
+        self.already_updated: bool = False
+        self.first_time: bool = True
+        self.api_key: str | None = os.getenv("METEOBLUE_API_KEY")
         if self.api_key is None:
             raise RuntimeError("METEOBLUE_API_KEY must be defined.")
 
     @staticmethod
-    def get_config_pkg():
+    def get_config_pkg() -> str:
         return "ts_config_ocs"
 
-    async def configure(self, config):
+    async def configure(self, config: types.SimpleNamespace) -> None:
         self.tel_loop_error_wait_time = config.tel_loop_error_wait_time
 
-    def convert_time(self, timestamp):
-        """Convert string to datetime object and then convert to unix
-        timestamp.
+    def convert_time(self, timestamp: str) -> float:
+        """Convert timestamp string to unix timestamp.
 
         This is used to convert the string that MeteoBlue returns for time
         into a timestamp that can be published over DDS.
@@ -151,13 +152,13 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
 
         Returns
         -------
-        timestamp : `list` of `int`
-            An array of timestamps converted from the date string.
+        result : `float`
+            A timestamp float converted from string.
         """
-        timestamp = datetime.datetime.strptime(timestamp, "%Y-%m-%d %H:%M").timestamp()
-        return timestamp
+        result: float = datetime.datetime.strptime(timestamp, "%Y-%m-%d %H:%M").timestamp()
+        return result
 
-    async def telemetry(self):
+    async def telemetry(self) -> None:
         """Implement telemetry loop.
 
         Download the forecast information from the Meteoblue API to memory.
@@ -168,39 +169,35 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
         self.retries = 0
         while True:
             if self.retries >= self.max_retries:
-                await self.fault(
-                    code=1, report="Number of retries exceeded max retries."
-                )
+                await self.fault(code=1, report="Number of retries exceeded max retries.")
                 return
             if not self.simulation_mode:
                 time = datetime.datetime.now()
             else:
-                time = datetime.datetime(
-                    year=2024, month=12, day=1, hour=4, minute=0, second=0
-                )
+                time = datetime.datetime(year=2024, month=12, day=1, hour=4, minute=0, second=0)
             if (time.hour in [4, 16] or self.first_time) and not self.already_updated:
+                if self.simulation_mode:
+                    assert self.mock_server is not None
                 try:
                     site_url = (
-                        f"http://127.0.0.1:{self.mock_server.port}"
+                        f"{self.mock_server.url}"  # type: ignore
                         if self.simulation_mode
                         else SITE_URL
                     )
                     self.log.info(f"{site_url=}, {LATITUDE=}, {LONGITUDE=}")
-                    params = {
+                    params: dict = {
                         "lat": LATITUDE,
                         "lon": LONGITUDE,
                         "apikey": self.api_key,
                         "asl": ELEVATION,
                     }
                     self.log.info("Querying Meteoblue.")
-                    async with aiohttp.ClientSession(
-                        site_url, raise_for_status=True
-                    ) as session:
+                    async with aiohttp.ClientSession(site_url, raise_for_status=True) as session:
                         async with session.get(
                             REQUEST_URL,
                             params=params,
                         ) as resp:
-                            response = await resp.json()
+                            response: dict = await resp.json()
                             self.log.info("Got response.")
                             # self.log.debug(f"{response=}")
                 except asyncio.CancelledError:
@@ -238,26 +235,18 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                         # check for None in extraTerrestrialRadiationBackwards
                         trend_hourly_fld["extraterrestrialradiation_backwards"] = [
                             math.nan if value is None else value
-                            for value in trend_hourly_fld[
-                                "extraterrestrialradiation_backwards"
-                            ]
+                            for value in trend_hourly_fld["extraterrestrialradiation_backwards"]
                         ]
                         for name, values in trend_hourly_fld.items():
-                            trend_hourly_fld[name] = values[
-                                :GUARANTEED_HOURLY_TREND_LENGTH
-                            ]
+                            trend_hourly_fld[name] = values[:GUARANTEED_HOURLY_TREND_LENGTH]
                         timestamps = trend_hourly_fld["time"]
-                        converted_timestamps = [
-                            self.convert_time(timestamp) for timestamp in timestamps
-                        ]
+                        converted_timestamps = [self.convert_time(timestamp) for timestamp in timestamps]
                         await self.tel_hourlyTrend.set_write(
                             timestamp=converted_timestamps,
                             temperature=trend_hourly_fld["temperature"],
                             temperatureSpread=trend_hourly_fld["temperature_spread"],
                             precipitation=trend_hourly_fld["precipitation"],
-                            precipitationSpread=trend_hourly_fld[
-                                "precipitation_spread"
-                            ],
+                            precipitationSpread=trend_hourly_fld["precipitation_spread"],
                             windspeed=trend_hourly_fld["windspeed"],
                             windspeedSpread=trend_hourly_fld["windspeed_spread"],
                             windDirection=trend_hourly_fld["winddirection"],
@@ -268,9 +257,7 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                                 "extraterrestrialradiation_backwards"
                             ],
                             totalCloudCover=trend_hourly_fld["totalcloudcover"],
-                            totalCloudCoverSpread=trend_hourly_fld[
-                                "totalcloudcover_spread"
-                            ],
+                            totalCloudCoverSpread=trend_hourly_fld["totalcloudcover_spread"],
                             snowFraction=trend_hourly_fld["snowfraction"],
                             pictocode=trend_hourly_fld["pictocode"],
                             gust=trend_hourly_fld["gust"],
@@ -281,9 +268,7 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                             visibility=trend_hourly_fld["visibility"],
                             skinTemperature=trend_hourly_fld["skintemperature"],
                             dewPointTemperature=trend_hourly_fld["dewpointtemperature"],
-                            precipitationProbability=trend_hourly_fld[
-                                "precipitation_probability"
-                            ],
+                            precipitationProbability=trend_hourly_fld["precipitation_probability"],
                             cape=trend_hourly_fld["cape"],
                             liftedIndex=trend_hourly_fld["liftedindex"],
                             evapoTranspiration=trend_hourly_fld["evapotranspiration"],
@@ -293,13 +278,9 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                         )
                         trend_daily_fld = response["trend_day"]
                         for name, values in trend_daily_fld.items():
-                            trend_daily_fld[name] = values[
-                                :GUARANTEED_DAILY_TREND_LENGTH
-                            ]
+                            trend_daily_fld[name] = values[:GUARANTEED_DAILY_TREND_LENGTH]
                         timestamps = trend_daily_fld["time"]
-                        converted_timestamps = [
-                            self.convert_time(timestamp) for timestamp in timestamps
-                        ]
+                        converted_timestamps = [self.convert_time(timestamp) for timestamp in timestamps]
                         await self.tel_dailyTrend.set_write(
                             timestamp=converted_timestamps,
                             pictocode=trend_daily_fld["pictocode"],
@@ -308,9 +289,7 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                             temperatureMean=trend_daily_fld["temperature_mean"],
                             temperatureSpread=trend_daily_fld["temperature_spread"],
                             precipitation=trend_daily_fld["precipitation"],
-                            precipitationProbability=trend_daily_fld[
-                                "precipitation_probability"
-                            ],
+                            precipitationProbability=trend_daily_fld["precipitation_probability"],
                             precipitationSpread=trend_daily_fld["precipitation_spread"],
                             windspeedMax=trend_daily_fld["windspeed_max"],
                             windspeedMin=trend_daily_fld["windspeed_min"],
@@ -319,27 +298,19 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                             windDirection=trend_daily_fld["winddirection"],
                             seaLevelPressureMax=trend_daily_fld["sealevelpressure_max"],
                             seaLevelPressureMin=trend_daily_fld["sealevelpressure_min"],
-                            seaLevelPressureMean=trend_daily_fld[
-                                "sealevelpressure_mean"
-                            ],
+                            seaLevelPressureMean=trend_daily_fld["sealevelpressure_mean"],
                             relativeHumidityMax=trend_daily_fld["relativehumidity_max"],
                             relativeHumidityMin=trend_daily_fld["relativehumidity_min"],
-                            relativeHumidityMean=trend_daily_fld[
-                                "relativehumidity_mean"
-                            ],
+                            relativeHumidityMean=trend_daily_fld["relativehumidity_mean"],
                             predictability=trend_daily_fld["predictability"],
                             predictabilityClass=trend_daily_fld["predictability_class"],
                             totalCloudCoverMax=trend_daily_fld["totalcloudcover_max"],
                             totalCloudCoverMin=trend_daily_fld["totalcloudcover_min"],
                             totalCloudCoverMean=trend_daily_fld["totalcloudcover_mean"],
-                            totalCloudCoverSpread=trend_daily_fld[
-                                "totalcloudcover_spread"
-                            ],
+                            totalCloudCoverSpread=trend_daily_fld["totalcloudcover_spread"],
                             snowFraction=trend_daily_fld["snowfraction"],
                             ghiTotal=trend_daily_fld["ghi_total"],
-                            extraTerrestrialRadiationTotal=trend_daily_fld[
-                                "extraterrestrialradiation_total"
-                            ],
+                            extraTerrestrialRadiationTotal=trend_daily_fld["extraterrestrialradiation_total"],
                             gustMax=trend_daily_fld["gust_max"],
                             gustMin=trend_daily_fld["gust_min"],
                             gustMean=trend_daily_fld["gust_mean"],
@@ -359,15 +330,9 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                             skinTemperatureMax=trend_daily_fld["skintemperature_max"],
                             skinTemperatureMin=trend_daily_fld["skintemperature_min"],
                             skinTemperatureMean=trend_daily_fld["skintemperature_mean"],
-                            dewPointTemperatureMax=trend_daily_fld[
-                                "dewpointtemperature_max"
-                            ],
-                            dewPointTemperatureMin=trend_daily_fld[
-                                "dewpointtemperature_min"
-                            ],
-                            dewPointTemperatureMean=trend_daily_fld[
-                                "dewpointtemperature_mean"
-                            ],
+                            dewPointTemperatureMax=trend_daily_fld["dewpointtemperature_max"],
+                            dewPointTemperatureMin=trend_daily_fld["dewpointtemperature_min"],
+                            dewPointTemperatureMean=trend_daily_fld["dewpointtemperature_mean"],
                             capeMax=trend_daily_fld["cape_max"],
                             capeMin=trend_daily_fld["cape_min"],
                             capeMean=trend_daily_fld["cape_mean"],
@@ -375,9 +340,7 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                             liftedIndexMin=trend_daily_fld["liftedindex_min"],
                             liftedIndexMean=trend_daily_fld["liftedindex_mean"],
                             evapoTranspiration=trend_daily_fld["evapotranspiration"],
-                            referenceEvapoTranspirationFao=trend_daily_fld[
-                                "referenceevapotranspiration_fao"
-                            ],
+                            referenceEvapoTranspirationFao=trend_daily_fld["referenceevapotranspiration_fao"],
                         )
                         self.already_updated = True
                         self.first_time = False
@@ -386,16 +349,16 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
 
                     except Exception:
                         self.log.exception("There was a problem in the telemetry loop.")
-                        await self.fault(
-                            code=2, report="There was a problem in the telemetry loop."
-                        )
+                        # FIXME Create ErrorCode enum in ts_xml and replace
+                        # code with value.
+                        await self.fault(code=2, report="There was a problem in the telemetry loop.")
                         return
             else:
                 if time.hour != self.last_hour:
                     self.already_updated = False
                 await asyncio.sleep(self.interval)
 
-    async def handle_summary_state(self):
+    async def handle_summary_state(self) -> None:
         """Handle summary state transitions.
 
         If the CSC transitions to the disabled (or enabled) state,
@@ -413,6 +376,7 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                     )
                 elif self.simulation_mode == 3:
                     self.mock_server = MockServer(bad_request=True)
+                assert self.mock_server is not None
                 await self.mock_server.start()
             if self.telemetry_task.done():
                 self.telemetry_task = asyncio.create_task(self.telemetry())

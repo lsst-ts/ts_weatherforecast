@@ -3,6 +3,6 @@ check-xml: true
 black: true
 flake8: true
 isort: true
-mypy: false
+mypy: true
 towncrier: true
-ruff: false
+ruff: true

@@ -21,7 +21,7 @@
 
 import yaml
 
-CONFIG_SCHEMA = yaml.safe_load(
+CONFIG_SCHEMA: dict = yaml.safe_load(
     """
 $schema: http://json-schema.org/draft-07/schema#
 $id: https://github.com/lsst-ts/ts_weatherforecast/blob/main/python/lsst/ts/weatherforecast/config_schema.py

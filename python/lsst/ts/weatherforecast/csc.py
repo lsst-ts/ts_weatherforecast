@@ -33,6 +33,7 @@ import math
 import os
 import pathlib
 import types
+import zoneinfo
 
 import aiohttp
 from lsst.ts import salobj, utils
@@ -155,7 +156,11 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
         result : `float`
             A timestamp float converted from string.
         """
-        result: float = datetime.datetime.strptime(timestamp, "%Y-%m-%d %H:%M").timestamp()
+        result: float = (
+            datetime.datetime.strptime(timestamp, "%Y-%m-%d %H:%M")
+            .replace(tzinfo=zoneinfo.ZoneInfo("America/Santiago"))
+            .timestamp()
+        )
         return result
 
     async def telemetry(self) -> None:
@@ -173,7 +178,7 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                 await self.fault(code=1, report="Number of retries exceeded max retries.")
                 return
             if not self.simulation_mode:
-                time = datetime.datetime.now()
+                time = datetime.datetime.now(tz=zoneinfo.ZoneInfo("America/Santiago"))
             else:
                 time = datetime.datetime(year=2024, month=12, day=1, hour=4, minute=0, second=0)
             if (time.hour in [4, 16] or self.first_time) and not self.already_updated:

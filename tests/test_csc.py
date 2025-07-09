@@ -75,7 +75,7 @@ class WeatherForecastCSCTestCase(salobj.BaseCscTestCase, unittest.IsolatedAsynci
             config_dir=TEST_CONFIG_DIR,
         ):
             await self.assert_next_summary_state(state=salobj.State.ENABLED)
-            await self.assert_next_summary_state(state=salobj.State.FAULT)
+            await self.assert_next_summary_state(state=salobj.State.FAULT, timeout=TIMEOUT)
 
     def check_arrays(self, response: dict, expected: dict, length: int) -> None:
         missing_names = []

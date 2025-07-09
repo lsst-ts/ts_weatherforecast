@@ -26,6 +26,7 @@ import pathlib
 import re
 import unittest
 import typing
+from zoneinfo import ZoneInfo
 
 from lsst.ts import salobj, weatherforecast
 from pytest import approx
@@ -74,7 +75,7 @@ class WeatherForecastCSCTestCase(salobj.BaseCscTestCase, unittest.IsolatedAsynci
             config_dir=TEST_CONFIG_DIR,
         ):
             await self.assert_next_summary_state(state=salobj.State.ENABLED)
-            await self.assert_next_summary_state(state=salobj.State.FAULT)
+            await self.assert_next_summary_state(state=salobj.State.FAULT, timeout=TIMEOUT)
 
     def check_arrays(self, response: dict, expected: dict, length: int) -> None:
         missing_names = []
@@ -85,7 +86,9 @@ class WeatherForecastCSCTestCase(salobj.BaseCscTestCase, unittest.IsolatedAsynci
                 assert values[:length] == approx(expected[name][:length])
             elif name == "timestamp":
                 converted_timestamps = [
-                    datetime.datetime.strptime(timestamp, "%Y-%m-%d %H:%M").timestamp()
+                    datetime.datetime.strptime(timestamp, "%Y-%m-%d %H:%M")
+                    .replace(tzinfo=ZoneInfo("America/Santiago"))
+                    .timestamp()
                     for timestamp in expected["time"]
                 ]
                 assert values[:length] == approx(converted_timestamps[:length])

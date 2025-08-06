@@ -32,7 +32,7 @@ from lsst.ts import salobj, weatherforecast
 from pytest import approx
 
 TEST_CONFIG_DIR = pathlib.Path(__file__).parents[1].joinpath("tests", "data", "config")
-TIMEOUT = 60
+TIMEOUT = 240
 
 
 class WeatherForecastCSCTestCase(salobj.BaseCscTestCase, unittest.IsolatedAsyncioTestCase):

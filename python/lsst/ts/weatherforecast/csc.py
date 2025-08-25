@@ -163,6 +163,14 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
         )
         return result
 
+    def cleanup_results(
+        self, data: dict[str, list[int | float | None]]
+    ) -> dict[str, list[float | int | None]]:
+        """Convert None values to math.nan if found."""
+        for field in data:
+            data[field] = [math.nan if value is None else value for value in data[field]]
+        return data
+
     async def telemetry(self) -> None:
         """Implement telemetry loop.
 
@@ -238,11 +246,7 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                             modelrunUpdatetime=str(modelrun_updatetime_utc),
                         )
                         trend_hourly_fld = response["trend_1h"]
-                        # check for None in extraTerrestrialRadiationBackwards
-                        trend_hourly_fld["extraterrestrialradiation_backwards"] = [
-                            math.nan if value is None else value
-                            for value in trend_hourly_fld["extraterrestrialradiation_backwards"]
-                        ]
+                        trend_hourly_fld = self.cleanup_results(trend_hourly_fld)
                         for name, values in trend_hourly_fld.items():
                             trend_hourly_fld[name] = values[:GUARANTEED_HOURLY_TREND_LENGTH]
                         timestamps = trend_hourly_fld["time"]

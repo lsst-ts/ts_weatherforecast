@@ -6,6 +6,15 @@ Version History
 
 .. towncrier release notes start
 
+v0.6.1 (2025-08-25)
+===================
+
+Bug Fixes
+---------
+
+- Added timezone awareness to timestamp conversion. (`OSW-675 <https://rubinobs.atlassian.net//browse/OSW-675>`_)
+
+
 v0.6.0 (2025-05-16)
 ===================
 

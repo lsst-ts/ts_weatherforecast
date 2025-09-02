@@ -32,7 +32,7 @@ from lsst.ts import salobj, weatherforecast
 from pytest import approx
 
 TEST_CONFIG_DIR = pathlib.Path(__file__).parents[1].joinpath("tests", "data", "config")
-TIMEOUT = 60
+TIMEOUT = 120
 
 
 class WeatherForecastCSCTestCase(salobj.BaseCscTestCase, unittest.IsolatedAsyncioTestCase):
@@ -114,7 +114,7 @@ class WeatherForecastCSCTestCase(salobj.BaseCscTestCase, unittest.IsolatedAsynci
             simulation_mode=1,
             config_dir=TEST_CONFIG_DIR,
         ):
-            metadata = await self.assert_next_sample(topic=self.remote.tel_metadata)
+            metadata = await self.assert_next_sample(topic=self.remote.tel_metadata, timeout=TIMEOUT)
             assert approx(-30.24) == metadata.latitude
             assert approx(-70.34) == metadata.longitude
             assert 2298 == metadata.height

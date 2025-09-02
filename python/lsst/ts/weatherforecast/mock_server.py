@@ -114,5 +114,5 @@ class MockServer:
         if self.bad_request:
             self.log.info(f"Inside bad request check. {self.bad_request_counter=}")
             self.bad_request_counter += 1
-            raise web.HTTPBadRequest(reason="Something went wrong.")
+            raise web.HTTPInternalServerError()
         return web.json_response(self.response)

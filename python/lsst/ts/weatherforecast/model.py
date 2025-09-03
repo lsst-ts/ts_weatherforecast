@@ -56,11 +56,11 @@ class BobDobbs:
 
     def create_client(self) -> None:
         """Create the EFD client."""
-        efd_uri = efd_sites[os.getenv("SITE", "tucson")]
-        if efd_uri is not None or not self.simulation_mode:
+        efd_uri = efd_sites[os.getenv("SITE", "test")]
+        if efd_uri in ["summit_efd", "summit_efd_copy"]:
             self.client = EfdClient(efd_uri)
         else:
-            self.client = EfdClient("summit_efd", client=MockClient())
+            self.client = EfdClient("summit_efd_copy", client=MockClient())
 
     async def query(self) -> pd.DataFrame:
         """Return the results from the EFD."""

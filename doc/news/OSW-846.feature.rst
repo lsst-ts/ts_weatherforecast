@@ -1,0 +1,1 @@
+Added new source of temperature that is generated from prophet forecast data model.

@@ -42,7 +42,7 @@ class MockClient:
     async def query(self, *args: Any, **kwargs: dict[str, Any]) -> pd.DataFrame:
         """Return a fake response to mock query."""
         data = pd.DataFrame()
-        data["mean_temperature"] = [random.uniform(-5, 5) for _ in range(10080)]
+        data["mean_temperature"] = [random.uniform(-5, 5) for _ in range(1008)]
         return data
 
 

@@ -12,6 +12,7 @@ build:
     entry_points:
       - run_weatherforecast = lsst.ts.weatherforecast:execute_csc
     script: {{ PYTHON }} -m pip install --no-deps --ignore-installed .
+    string: "py{{ PY_VER | replace('.', '') }}{{ PKG_HASH }}_{{ PKG_BUILDNUM }}"
 
 test:
     requires:

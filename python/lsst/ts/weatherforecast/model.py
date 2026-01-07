@@ -72,7 +72,7 @@ class BobDobbs:
                 "where salIndex=301 AND time > now() - 7d GROUP BY time(1m) FILL(linear)",
             )
         )
-        results = await self.client.influx_client.query(query)
+        results = await self.client._influx_client.query(query)
         return results
 
     def configure_model(self) -> None:

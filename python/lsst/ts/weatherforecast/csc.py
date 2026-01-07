@@ -138,6 +138,7 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
         self.api_key: str | None = os.getenv("METEOBLUE_API_KEY")
         self.model = BobDobbs(simulation_mode=simulation_mode)
         self.prediction: None | pd.DataFrame = None
+        self.disable_meteoblue = False
         if self.api_key is None:
             raise RuntimeError("METEOBLUE_API_KEY must be defined.")
 
@@ -155,6 +156,7 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
     async def configure(self, config: types.SimpleNamespace) -> None:
         """Configure the CSC."""
         self.tel_loop_error_wait_time = config.tel_loop_error_wait_time
+        self.disable_meteoblue = config.disable_meteoblue
 
     def convert_time(self, timestamp: str) -> float:
         """Convert timestamp string to unix timestamp.
@@ -315,12 +317,14 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
     async def telemetry(self) -> None:
         """Run the telemetry loop."""
         self.first_time = True
-        await self.write_data()
+        if not self.disable_meteoblue:
+            await self.write_data()
         self.first_time = False
         while True:
             time = datetime.datetime.now(tz=zoneinfo.ZoneInfo("America/Santiago"))
             if time.hour in [4, 16] and not self.already_updated:
-                await self.write_data()
+                if not self.disable_meteoblue:
+                    await self.write_data()
                 self.last_hour = time.hour
                 self.already_updated = True
             else:

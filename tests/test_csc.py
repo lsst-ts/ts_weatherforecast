@@ -28,8 +28,9 @@ import typing
 import unittest
 from zoneinfo import ZoneInfo
 
-from lsst.ts import salobj, weatherforecast
 from pytest import approx
+
+from lsst.ts import salobj, weatherforecast
 
 TEST_CONFIG_DIR = pathlib.Path(__file__).parents[1].joinpath("tests", "data", "config")
 TIMEOUT = 120

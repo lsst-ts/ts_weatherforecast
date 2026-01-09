@@ -38,6 +38,7 @@ from typing import Any
 
 import aiohttp
 import pandas as pd
+
 from lsst.ts import salobj, utils
 
 from . import __version__

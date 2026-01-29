@@ -37,5 +37,5 @@ requirements:
         - ts-salobj
         - ts-xml
         - aiohttp >=3.8
-        - lsst-efd-client
-        - prophet
+        - lsst-efd-client =0.14
+        - prophet =1.2

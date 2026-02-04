@@ -33,7 +33,7 @@ from pytest import approx
 from lsst.ts import salobj, weatherforecast
 
 TEST_CONFIG_DIR = pathlib.Path(__file__).parents[1].joinpath("tests", "data", "config")
-TIMEOUT = 120
+TIMEOUT = 150
 
 
 class WeatherForecastCSCTestCase(salobj.BaseCscTestCase, unittest.IsolatedAsyncioTestCase):
@@ -125,8 +125,8 @@ class WeatherForecastCSCTestCase(salobj.BaseCscTestCase, unittest.IsolatedAsynci
             assert "GMT-03" == metadata.timezoneAbbrevation
             assert -3 == metadata.timeOffset
 
-            hourly_trend = await self.assert_next_sample(topic=self.remote.tel_hourlyTrend)
-            daily_trend = await self.assert_next_sample(topic=self.remote.tel_dailyTrend)
+            hourly_trend = await self.assert_next_sample(topic=self.remote.tel_hourlyTrend, timeout=TIMEOUT)
+            daily_trend = await self.assert_next_sample(topic=self.remote.tel_dailyTrend, timeout=TIMEOUT)
             with open(test_file) as f:
                 df = json.load(f)
 

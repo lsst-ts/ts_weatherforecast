@@ -68,7 +68,7 @@ class BobDobbs:
         query = " ".join(
             (
                 "SELECT mean(temperatureItem0) as mean_temperature FROM",
-                "lsst.sal.ESS.temperature",
+                '"efd"."autogen"."lsst.sal.ESS.temperature"',
                 "where salIndex=301 AND time > now() - 7d GROUP BY time(1m) FILL(linear)",
             )
         )

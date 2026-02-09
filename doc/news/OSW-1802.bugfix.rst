@@ -1,0 +1,1 @@
+Fixed query call to use right prefix.

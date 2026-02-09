@@ -193,13 +193,13 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
     async def make_prediction(self) -> pd.DataFrame:
         """Make the temperature prediction."""
         prediction = await self.model.do_prediction()
-        return prediction["trend"]
+        return prediction["yhat"]
 
     async def prediction_loop(self) -> None:
         """Generate a prediction every x seconds."""
         while True:
             self.prediction = await self.model.do_prediction()
-            await self.tel_hourlyTrend.set_write(temperature=self.prediction["trend"])
+            await self.tel_hourlyTrend.set_write(temperature=self.prediction["yhat"])
             await asyncio.sleep(60 * 15)
 
     async def write_data(self) -> None:

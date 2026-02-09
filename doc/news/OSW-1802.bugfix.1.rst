@@ -1,0 +1,1 @@
+Changed field to use yhat instead of trend.

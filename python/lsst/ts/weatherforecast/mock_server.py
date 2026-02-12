@@ -86,9 +86,13 @@ class MockServer:
         app: web.Application = self.make_app()
         self.runner = web.AppRunner(app)
         await self.runner.setup()
-        self.site = web.TCPSite(self.runner, "127.0.0.1", reuse_port=True)
+        self.site = web.TCPSite(self.runner, host="127.0.0.1", port=self.port, reuse_port=False)
         await self.site.start()
-        self.url = self.site.name
+        # Discover the actual port assigned by the OS
+        assert self.site._server is not None
+        sockname = self.site._server.sockets[0].getsockname()
+        host, port = sockname[0], sockname[1]
+        self.url = f"http://{host}:{port}"
 
     async def cleanup(self) -> None:
         """Clean up the server."""

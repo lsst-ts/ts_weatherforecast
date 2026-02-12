@@ -1,0 +1,1 @@
+Pinned prophet to 1.2 in conda recipe.

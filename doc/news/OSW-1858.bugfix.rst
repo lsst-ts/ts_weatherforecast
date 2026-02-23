@@ -1,0 +1,1 @@
+Fixed get_prediction_loop by calling get_prediction method and ensuring that the value is a list.

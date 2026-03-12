@@ -138,7 +138,7 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
         self.first_time: bool = True
         self.api_key: str | None = os.getenv("METEOBLUE_API_KEY")
         self.model = BobDobbs(simulation_mode=simulation_mode)
-        self.prediction: pd.DataFrame = pd.DataFrame()
+        self.prediction: pd.Series = pd.Series()
         self.disable_meteoblue = False
         if self.api_key is None:
             raise RuntimeError("METEOBLUE_API_KEY must be defined.")
@@ -190,7 +190,7 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
             data[field] = [math.nan if value is None else value for value in data[field]]
         return data
 
-    async def make_prediction(self) -> pd.DataFrame:
+    async def make_prediction(self) -> pd.Series:
         """Make the temperature prediction."""
         prediction = await self.model.do_prediction()
         return prediction["yhat"]
@@ -202,7 +202,7 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                 self.prediction = await self.make_prediction()
             except Exception:
                 self.log.exception("Failed to make prediction.")
-            await self.tel_hourlyTrend.set_write(temperature=self.prediction.values.tolist())
+            await self.tel_hourlyTrend.set_write(temperature=self.prediction.tolist())
             await asyncio.sleep(60 * 15)
 
     async def write_data(self) -> None:

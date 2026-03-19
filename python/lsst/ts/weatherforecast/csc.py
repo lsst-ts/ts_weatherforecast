@@ -202,6 +202,8 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                 self.prediction = await self.make_prediction()
             except Exception:
                 self.log.exception("Failed to make prediction.")
+                await self.fault(code=1, report="Failed to make prediction from prophet.")
+                raise
             await self.tel_hourlyTrend.set_write(temperature=self.prediction.tolist())
             await asyncio.sleep(60 * 15)
 

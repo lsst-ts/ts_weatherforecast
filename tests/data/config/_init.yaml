@@ -1,2 +1,2 @@
-tel_loop_error_wait_time: 30
+tel_loop_error_wait_time: 5
 disable_meteoblue: false

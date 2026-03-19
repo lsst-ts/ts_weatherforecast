@@ -113,7 +113,7 @@ class BobDobbs:
         naive_series = series.dt.tz_localize(None)
         results["ds"] = naive_series
         results = results.rename(columns={"mean_temperature": "y"})
-        # results["unique_id"] = "Temperature"
+        results = results.drop_duplicates()
         return results
 
     async def do_prediction(self) -> pd.DataFrame:

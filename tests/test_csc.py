@@ -26,6 +26,7 @@ import pathlib
 import re
 import typing
 import unittest
+from unittest.mock import patch
 from zoneinfo import ZoneInfo
 
 from pytest import approx
@@ -77,6 +78,22 @@ class WeatherForecastCSCTestCase(salobj.BaseCscTestCase, unittest.IsolatedAsynci
         ):
             await self.assert_next_summary_state(state=salobj.State.ENABLED)
             await self.assert_next_summary_state(state=salobj.State.FAULT, timeout=TIMEOUT)
+
+    async def test_prediction_exception_faults_csc(self) -> None:
+        async def fail_prediction(*args: typing.Any, **kwargs: typing.Any) -> typing.Any:
+            raise RuntimeError("prediction failed")
+
+        with patch.object(
+            weatherforecast.csc.WeatherForecastCSC,
+            "make_prediction",
+            side_effect=fail_prediction,
+        ):
+            async with self.make_csc(
+                initial_state=salobj.State.ENABLED,
+                simulation_mode=1,
+                config_dir=TEST_CONFIG_DIR,
+            ):
+                await self.assert_next_summary_state(state=salobj.State.FAULT, timeout=TIMEOUT)
 
     def check_arrays(self, response: dict, expected: dict, length: int) -> None:
         missing_names = []

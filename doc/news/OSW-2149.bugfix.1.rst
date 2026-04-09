@@ -1,0 +1,1 @@
+Changed calls to be model.fit and model.predict in module not in prophet library.

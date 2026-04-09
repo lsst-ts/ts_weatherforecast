@@ -56,8 +56,8 @@ class BobDobbs:
 
     def create_client(self) -> None:
         """Create the EFD client."""
-        efd_uri = efd_sites[os.getenv("SITE", "test")]
-        if efd_uri in ["summit_efd", "summit_efd_copy"]:
+        efd_uri = efd_sites[os.getenv("LSST_SITE", "test")]
+        if efd_uri in ["summit_efd", "base_efd"]:
             self.client = EfdClient(efd_uri)
         else:
             self.client = EfdClient("summit_efd_copy", client=MockClient())
@@ -122,6 +122,6 @@ class BobDobbs:
         self.configure_model()
         assert self.model is not None
         results = self.setup_fit(results)
-        await to_thread(self.model.fit, results)
-        prediction = await to_thread(self.model.predict)
+        await to_thread(self.fit, results)
+        prediction = await to_thread(self.predict)
         return prediction

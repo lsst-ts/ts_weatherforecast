@@ -21,4 +21,10 @@
 
 __all__ = ["efd_sites"]
 
-efd_sites = {"summit": "summit_efd", "base": "summit_efd_copy", "tucson": None, "test": None}
+efd_sites = {
+    "summit": "summit_efd",
+    "base": "base_efd",
+    "tucson": None,
+    "weatherforecast": None,
+    "test": None,
+}

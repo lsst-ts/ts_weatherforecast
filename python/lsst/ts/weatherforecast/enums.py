@@ -35,3 +35,9 @@ class SimulationMode(enum.IntEnum):
     """Some of the forecast is None."""
     BROKEN = 3
     """The server is broken."""
+
+
+class ErrorCodes(enum.IntEnum):
+    PREDICTION_FAILED = 1
+    CLIENT_FAILED = 2
+    METEOBLUE_FAILED = 3

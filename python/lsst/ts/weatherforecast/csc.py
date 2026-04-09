@@ -43,7 +43,7 @@ from lsst.ts import salobj, utils
 
 from . import __version__
 from .config_schema import CONFIG_SCHEMA
-from .enums import SimulationMode
+from .enums import ErrorCodes, SimulationMode
 from .mock_server import MockServer
 from .model import BobDobbs
 
@@ -202,9 +202,11 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                 self.prediction = await self.make_prediction()
             except Exception:
                 self.log.exception("Failed to make prediction.")
-                await self.fault(code=1, report="Failed to make prediction from prophet.")
+                await self.fault(
+                    code=ErrorCodes.PREDICTION_FAILED, report="Failed to make prediction from prophet."
+                )
                 raise
-            await self.tel_hourlyTrend.set_write(temperature=self.prediction.tolist())
+            await self.tel_hourlyTrend.set_write(temperature=self.prediction)
             await asyncio.sleep(60 * 15)
 
     async def write_data(self) -> None:
@@ -365,7 +367,7 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                         )
                         await asyncio.sleep(self.tel_loop_error_wait_time)
                         continue
-        await self.fault(code=1, report="Number of retries exceeded.")
+        await self.fault(code=ErrorCodes.METEOBLUE_FAILED, report="Number of retries exceeded.")
         return None
 
     def setup_response(self, response: dict) -> tuple[dict, dict]:
@@ -400,7 +402,11 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
         """
         if self.disabled_or_enabled:
             if self.model.client is None:
-                self.model.create_client()
+                try:
+                    self.model.create_client()
+                except Exception:
+                    self.log.exception("Failed to create client.")
+                    await self.fault(code=ErrorCodes.CLIENT_FAILED, report="Failed to create client.")
             if self.mock_server is None and self.simulation_mode:
                 if self.simulation_mode == 1:
                     self.mock_server = MockServer()

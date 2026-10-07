@@ -1,1 +1,0 @@
-Set None values to math.nan for every field before publishing.

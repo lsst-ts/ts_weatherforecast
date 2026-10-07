@@ -6,6 +6,45 @@ Version History
 
 .. towncrier release notes start
 
+v0.7.0 (2026-10-07)
+===================
+
+New Features
+------------
+
+- Added new source of temperature that is generated from prophet forecast data model. (`OSW-846 <https://rubinobs.atlassian.net//browse/OSW-846>`_)
+- Added disable_meteoblue flag. (`OSW-1531 <https://rubinobs.atlassian.net//browse/OSW-1531>`_)
+
+
+Bug Fixes
+---------
+
+- Set None values to math.nan for every field before publishing. (`OSW-929 <https://rubinobs.atlassian.net//browse/OSW-929>`_)
+- Fixed query call to use right prefix. (`OSW-1802 <https://rubinobs.atlassian.net//browse/OSW-1802>`_)
+- Changed field to use yhat instead of trend. (`OSW-1802 <https://rubinobs.atlassian.net//browse/OSW-1802>`_)
+- Fixed get_prediction_loop by calling get_prediction method and ensuring that the value is a list. (`OSW-1858 <https://rubinobs.atlassian.net//browse/OSW-1858>`_)
+- Fixed error by removing duplicate index from EFD client. (`OSW-1858 <https://rubinobs.atlassian.net//browse/OSW-1858>`_)
+- Go to fault state if prophet prediction fails. (`OSW-1858 <https://rubinobs.atlassian.net//browse/OSW-1858>`_)
+- Changed base to use base_efd instead of summit_efd_copy. (`OSW-2149 <https://rubinobs.atlassian.net//browse/OSW-2149>`_)
+- Changed calls to be model.fit and model.predict in module not in prophet library. (`OSW-2149 <https://rubinobs.atlassian.net//browse/OSW-2149>`_)
+- Fixed SITE to be LSST_SITE. (`OSW-2149 <https://rubinobs.atlassian.net//browse/OSW-2149>`_)
+- Updated efd client to v1.
+
+
+Performance Enhancement
+-----------------------
+
+- Reduced telemetry loop complexity. (`OSW-846 <https://rubinobs.atlassian.net//browse/OSW-846>`_)
+- Added try-except handling to get_prediction_loop. (`OSW-1858 <https://rubinobs.atlassian.net//browse/OSW-1858>`_)
+
+
+Other Changes and Additions
+---------------------------
+
+- Added python version to build string for conda package. (`OSW-1484 <https://rubinobs.atlassian.net//browse/OSW-1484>`_)
+- Pinned prophet to 1.2 in conda recipe. (`OSW-1715 <https://rubinobs.atlassian.net//browse/OSW-1715>`_)
+
+
 v0.6.1 (2025-08-25)
 ===================
 

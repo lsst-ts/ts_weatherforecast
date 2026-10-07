@@ -1,1 +1,0 @@
-Fixed error by removing duplicate index from EFD client.

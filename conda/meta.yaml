@@ -39,4 +39,4 @@ requirements:
         - aiohttp >=3.8
         - lsst-efd-client =1
         - prophet =1.3
-        - pandas =2.3
+        - pandas >=2.3

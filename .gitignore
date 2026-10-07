@@ -174,3 +174,4 @@ py-api
 .clang-format
 .ruff.toml
 towncrier.toml
+.LICENSE.txt

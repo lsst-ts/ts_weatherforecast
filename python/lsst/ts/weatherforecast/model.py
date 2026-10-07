@@ -13,11 +13,11 @@
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 __all__ = ["BobDobbs"]
 
@@ -72,11 +72,7 @@ class BobDobbs:
                 "where salIndex=301 AND time > now() - 7d GROUP BY time(1m) FILL(linear)",
             )
         )
-        if hasattr(self.client, "_influx_client"):
-            results = await self.client._influx_client.query(query)
-        elif hasattr(self.client, "influx_client"):
-            results = await self.client.influx_client.query(query)
-        return results
+        return await self.client.influxql_query(query)
 
     def configure_model(self) -> None:
         """Configure the prophet model."""

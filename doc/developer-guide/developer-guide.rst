@@ -15,6 +15,13 @@ The service uses URL parameters to configure the call to the API
 The API returns a JSON formated file which is then objectfied into a dictionary of dictionaries of arrays.
 Each field is then published as telemetry to the WeatherForecast DDS telemetry.
 
+Temperature predictions come from the ``ts_weathernbeats`` HTTP service. The
+CSC requests ``GET /weathernbeats/forecast`` every 15 minutes and interpolates
+its timestamped curve onto the Meteoblue hourly timestamps. The service covers
+about 12 hours; ``hourlyTrend.temperature`` is NaN outside that horizon. When
+Meteoblue is disabled, the CSC publishes a UTC hourly timestamp grid beginning
+at the current hour. ``temperatureSpread`` still comes from Meteoblue.
+
 .. _Dependencies:
 
 Dependencies
@@ -63,15 +70,20 @@ Assuming use of the develop-env docker container.
 Usage
 =====
 
-In order to run the CSC, the METEOBLUE_API_KEY environment variable needs to be set.
+When Meteoblue is enabled, the METEOBLUE_API_KEY environment variable needs to be set.
+WEATHERNBEATS_URL must also be set to the reachable service origin, for example
+``https://example.org``. The CSC appends ``/weathernbeats/forecast`` to this
+URL. The service must be reachable from the CSC host; the CSC does not send an
+authentication token.
 
 .. _Simulator:
 
 Simulator
 =========
 
-No simulator is written nor provided.
-There is a forecast-test.json file that serves as data for the unit tests.
+The CSC simulation server returns Meteoblue fixture data and a short
+weathernbeats-compatible temperature curve. The Meteoblue fixture is stored in
+``forecast-test.json``.
 
 
 .. _Firmware:
@@ -101,4 +113,3 @@ Contributing
 Code and documentation contributions utilize pull-requests on github.
 Feature requests can be made by filing a Jira ticket with the `ts_weatherforecast` label.
 In all cases, reaching out to the :ref:`contacts for this CSC <ts_xml:index:csc-table:WeatherForecast>` is recommended.
-

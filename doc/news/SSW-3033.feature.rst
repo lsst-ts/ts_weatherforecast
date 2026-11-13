@@ -1,0 +1,2 @@
+Replaced the in-process Prophet model with a temperature prediction curve from the ts_weathernbeats HTTP service.
+Added nbeats topic to publish predictive curve values.

@@ -21,13 +21,16 @@
 
 __all__ = ["MockServer"]
 
+import datetime
 import json
 import logging
 import pathlib
+import zoneinfo
 
 from aiohttp import web
 
 REQUEST_URL = "/packages/trendpro-1h_trendpro-day"
+PREDICTION_URL = "/weathernbeats/forecast"
 
 
 class MockServer:
@@ -63,6 +66,7 @@ class MockServer:
         test_file: pathlib.Path = pathlib.Path(data)
         self.bad_request_counter: int = 0
         self.bad_request: bool = bad_request
+        self.current_prediction: bool = False
         self.log: logging.Logger = logging.getLogger(__name__)
         with open(test_file) as f:
             self.response: dict = json.load(f)
@@ -76,7 +80,9 @@ class MockServer:
             The app with the routes added.
         """
         app = web.Application()
-        app.add_routes([web.get(REQUEST_URL, self.get_forecast)])
+        app.add_routes(
+            [web.get(REQUEST_URL, self.get_forecast), web.get(PREDICTION_URL, self.get_prediction)]
+        )
         return app
 
     async def start(self) -> None:
@@ -120,3 +126,26 @@ class MockServer:
             self.bad_request_counter += 1
             raise web.HTTPInternalServerError()
         return web.json_response(self.response)
+
+    async def get_prediction(self, request: web.Request) -> web.Response:
+        """Return a short timestamped temperature curve."""
+        if self.bad_request:
+            raise web.HTTPInternalServerError()
+        if self.current_prediction:
+            start = datetime.datetime.now(datetime.timezone.utc).replace(minute=0, second=0, microsecond=0)
+        else:
+            start = datetime.datetime.strptime(
+                self.response["trend_1h"]["time"][0], "%Y-%m-%d %H:%M"
+            ).replace(tzinfo=zoneinfo.ZoneInfo("America/Santiago"))
+        return web.json_response(
+            {
+                "curve": [
+                    {
+                        "time": (start + datetime.timedelta(minutes=30 * index)).isoformat(),
+                        "temperature": float(index),
+                        "std": 0.5,
+                    }
+                    for index in range(1, 27)
+                ]
+            }
+        )

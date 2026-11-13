@@ -37,7 +37,6 @@ import zoneinfo
 from typing import Any
 
 import aiohttp
-import pandas as pd
 
 from lsst.ts import salobj, utils
 
@@ -45,7 +44,6 @@ from . import __version__
 from .config_schema import CONFIG_SCHEMA
 from .enums import ErrorCodes, SimulationMode
 from .mock_server import MockServer
-from .model import BobDobbs
 
 LATITUDE: float = -30.24
 LONGITUDE: float = -70.749
@@ -54,6 +52,8 @@ TIMEZONE: str = "America/Santiago"
 SITE_URL: str = "https://my.meteoblue.com"
 FORMAT: str = "json"
 REQUEST_URL: str = "/packages/trendpro-1h_trendpro-day"
+PREDICTION_URL: str = "/weathernbeats/forecast"
+NBEATS_LENGTH: int = 26
 COUNT_HOURLY: int = 382
 COUNT_DAILY: int = 15
 GUARANTEED_HOURLY_TREND_LENGTH: int = 336
@@ -137,11 +137,8 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
         self.already_updated: bool = False
         self.first_time: bool = True
         self.api_key: str | None = os.getenv("METEOBLUE_API_KEY")
-        self.model = BobDobbs(simulation_mode=simulation_mode)
-        self.prediction: pd.Series = pd.Series()
+        self.weathernbeats_url = os.getenv("WEATHERNBEATS_URL")
         self.disable_meteoblue = False
-        if self.api_key is None:
-            raise RuntimeError("METEOBLUE_API_KEY must be defined.")
 
     @staticmethod
     def get_config_pkg() -> str:
@@ -158,6 +155,8 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
         """Configure the CSC."""
         self.tel_loop_error_wait_time = config.tel_loop_error_wait_time
         self.disable_meteoblue = config.disable_meteoblue
+        if not self.disable_meteoblue and self.api_key is None:
+            raise RuntimeError("METEOBLUE_API_KEY must be defined.")
 
     def convert_time(self, timestamp: str) -> float:
         """Convert timestamp string to unix timestamp.
@@ -190,23 +189,58 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
             data[field] = [math.nan if value is None else value for value in data[field]]
         return data
 
-    async def make_prediction(self) -> pd.Series:
-        """Make the temperature prediction."""
-        prediction = await self.model.do_prediction()
-        return prediction["yhat"]
+    async def make_prediction(self) -> list[tuple[float, float]]:
+        """Fetch and validate the timestamped temperature curve."""
+        if self.simulation_mode:
+            assert self.mock_server is not None
+            site_url = self.mock_server.url
+        else:
+            if not self.weathernbeats_url:
+                raise RuntimeError("WEATHERNBEATS_URL must be defined.")
+            site_url = self.weathernbeats_url.rstrip("/")
+        timeout = aiohttp.ClientTimeout(total=60)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with session.get(f"{site_url}{PREDICTION_URL}") as resp:
+                resp.raise_for_status()
+                body = await resp.json()
+        return self.parse_curve(body)
+
+    @staticmethod
+    def parse_curve(body: dict[str, Any]) -> list[tuple[float, float]]:
+        """Validate the native 26-point service curve."""
+        rows = body["curve"]
+        if not isinstance(rows, list) or len(rows) != NBEATS_LENGTH:
+            raise ValueError("Forecast curve must contain exactly 26 points.")
+        curve: list[tuple[float, float]] = []
+        for row in rows:
+            time = datetime.datetime.fromisoformat(row["time"])
+            if time.tzinfo is None:
+                raise ValueError("Forecast times must include a timezone.")
+            timestamp = time.timestamp()
+            temperature = float(row["temperature"])
+            if not math.isfinite(timestamp) or not math.isfinite(temperature):
+                raise ValueError("Forecast curve contains a nonfinite value.")
+            if curve and timestamp <= curve[-1][0]:
+                raise ValueError("Forecast times must be strictly increasing.")
+            curve.append((timestamp, temperature))
+        return curve
 
     async def prediction_loop(self) -> None:
         """Generate a prediction every x seconds."""
         while True:
             try:
-                self.prediction = await self.make_prediction()
+                curve = await self.make_prediction()
+                if hasattr(self, "tel_nbeats"):
+                    await self.tel_nbeats.set_write(
+                        timestamp=[point[0] for point in curve],
+                        temperature=[point[1] for point in curve],
+                    )
             except Exception:
                 self.log.exception("Failed to make prediction.")
                 await self.fault(
-                    code=ErrorCodes.PREDICTION_FAILED, report="Failed to make prediction from prophet."
+                    code=ErrorCodes.PREDICTION_FAILED, report="Failed to get prediction from weathernbeats."
                 )
                 raise
-            await self.tel_hourlyTrend.set_write(temperature=self.prediction)
             await asyncio.sleep(60 * 15)
 
     async def write_data(self) -> None:
@@ -231,6 +265,7 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
 
         await self.tel_hourlyTrend.set_write(
             timestamp=trend_hourly_fld["time"],
+            temperature=trend_hourly_fld["temperature"],
             temperatureSpread=trend_hourly_fld["temperature_spread"],
             precipitation=trend_hourly_fld["precipitation"],
             precipitationSpread=trend_hourly_fld["precipitation_spread"],
@@ -320,7 +355,6 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
             evapoTranspiration=trend_daily_fld["evapotranspiration"],
             referenceEvapoTranspirationFao=trend_daily_fld["referenceevapotranspiration_fao"],
         )
-        # await self.tel_hourlyTrend.set_write(temperature=self.prediction)
 
     async def telemetry(self) -> None:
         """Run the telemetry loop."""
@@ -401,12 +435,6 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
         stop the telemetry loop.
         """
         if self.disabled_or_enabled:
-            if self.model.client is None:
-                try:
-                    self.model.create_client()
-                except Exception:
-                    self.log.exception("Failed to create client.")
-                    await self.fault(code=ErrorCodes.CLIENT_FAILED, report="Failed to create client.")
             if self.mock_server is None and self.simulation_mode:
                 if self.simulation_mode == 1:
                     self.mock_server = MockServer()
@@ -417,6 +445,7 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
                 elif self.simulation_mode == 3:
                     self.mock_server = MockServer(bad_request=True)
                 assert self.mock_server is not None
+                self.mock_server.current_prediction = self.disable_meteoblue
                 await self.mock_server.start()
             if self.prediction_task.done():
                 self.prediction_task = asyncio.create_task(self.prediction_loop())
@@ -425,7 +454,6 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
         else:
             self.telemetry_task.cancel()
             self.prediction_task.cancel()
-            # await self.telemetry_task
             if self.mock_server is not None:
                 server = self.mock_server
                 self.mock_server = None

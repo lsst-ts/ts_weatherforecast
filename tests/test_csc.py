@@ -19,15 +19,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+import asyncio
 import datetime
 import json
 import math
 import os
 import pathlib
 import re
+import types
 import typing
 import unittest
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 from zoneinfo import ZoneInfo
 
 from pytest import approx
@@ -36,6 +38,79 @@ from lsst.ts import salobj, weatherforecast
 
 TEST_CONFIG_DIR = pathlib.Path(__file__).parents[1].joinpath("tests", "data", "config")
 TIMEOUT = 150
+
+
+class CurveTestCase(unittest.TestCase):
+    """Validate service curves without starting a CSC or Kafka."""
+
+    def test_curve_validation(self) -> None:
+        csc = weatherforecast.csc.WeatherForecastCSC
+        start = datetime.datetime(2026, 1, 1, tzinfo=datetime.timezone.utc)
+        rows = [
+            {
+                "time": (start + datetime.timedelta(minutes=30 * index)).isoformat(),
+                "temperature": float(index),
+            }
+            for index in range(26)
+        ]
+        assert csc.parse_curve({"curve": rows}) == [
+            (start.timestamp() + 1800 * index, float(index)) for index in range(26)
+        ]
+        invalid: dict[str, typing.Any]
+        for invalid in (
+            {"curve": []},
+            {"curve": rows[:-1]},
+            {"curve": rows + [rows[-1]]},
+            {"curve": "invalid"},
+            {"curve": list(reversed(rows))},
+            {"curve": [rows[0]] + rows[:-1]},
+            {"curve": rows[:-1] + [{"time": rows[-1]["time"], "temperature": "nan"}]},
+            {"curve": rows[:-1] + [{"time": rows[-1]["time"], "temperature": "inf"}]},
+            {"curve": rows[:-1] + [{"time": rows[-1]["time"], "temperature": "invalid"}]},
+            {"curve": rows[:-1] + [{"time": "2026-01-01T12:30:00", "temperature": 25.0}]},
+            {"curve": rows[:-1] + [{"time": "invalid", "temperature": 25.0}]},
+        ):
+            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                csc.parse_curve(invalid)
+        for invalid in (
+            {},
+            {"curve": rows[:-1] + [{"temperature": 25.0}]},
+            {"curve": rows[:-1] + [{"time": rows[-1]["time"]}]},
+        ):
+            with self.subTest(invalid=invalid), self.assertRaises(KeyError):
+                csc.parse_curve(invalid)
+
+
+class PredictionLoopTestCase(unittest.IsolatedAsyncioTestCase):
+    """Check publication with both old and new XML interfaces."""
+
+    async def test_optional_nbeats_topic(self) -> None:
+        curve = [(float(index * 1800), float(index)) for index in range(26)]
+        for has_topic in (False, True):
+            with self.subTest(has_topic=has_topic):
+                csc = types.SimpleNamespace(
+                    make_prediction=AsyncMock(return_value=curve),
+                    fault=AsyncMock(),
+                )
+                topic = types.SimpleNamespace(set_write=AsyncMock())
+                if has_topic:
+                    csc.tel_nbeats = topic
+                with patch(
+                    "lsst.ts.weatherforecast.csc.asyncio.sleep",
+                    side_effect=asyncio.CancelledError,
+                ) as sleep:
+                    with self.assertRaises(asyncio.CancelledError):
+                        await weatherforecast.csc.WeatherForecastCSC.prediction_loop(csc)
+                csc.make_prediction.assert_awaited_once()
+                csc.fault.assert_not_awaited()
+                sleep.assert_awaited_once_with(60 * 15)
+                if has_topic:
+                    topic.set_write.assert_awaited_once_with(
+                        timestamp=[point[0] for point in curve],
+                        temperature=[point[1] for point in curve],
+                    )
+                else:
+                    topic.set_write.assert_not_awaited()
 
 
 class WeatherForecastCSCTestCase(salobj.BaseCscTestCase, unittest.IsolatedAsyncioTestCase):
@@ -97,31 +172,6 @@ class WeatherForecastCSCTestCase(salobj.BaseCscTestCase, unittest.IsolatedAsynci
             ):
                 await self.assert_next_summary_state(state=salobj.State.FAULT, timeout=TIMEOUT)
 
-    def test_curve_interpolation_and_validation(self) -> None:
-        csc = weatherforecast.csc.WeatherForecastCSC
-        curve = [(0.0, 1.0), (1800.0, 3.0), (5400.0, 7.0)]
-        values = csc.temperatures_at_times(curve, [-1.0, 0.0, 900.0, 3600.0, 5400.0, 7200.0])
-        assert math.isnan(values[0])
-        assert values[1:5] == approx([1.0, 2.0, 5.0, 7.0])
-        assert math.isnan(values[5])
-
-        valid = {
-            "curve": [
-                {"time": "2026-01-01T00:00:00Z", "temperature": 1.0},
-                {"time": "2026-01-01T00:30:00Z", "temperature": 2.0},
-            ]
-        }
-        assert len(csc.parse_curve(valid)) == 2
-        invalid: dict[str, typing.Any]
-        for invalid in (
-            {"curve": []},
-            {"curve": [valid["curve"][1], valid["curve"][0]]},
-            {"curve": [valid["curve"][0], {"time": "2026-01-01T00:30:00Z", "temperature": "nan"}]},
-            {"curve": [valid["curve"][0], {"time": "2026-01-01T00:30:00", "temperature": 2.0}]},
-        ):
-            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
-                csc.parse_curve(invalid)
-
     async def test_prediction_without_meteoblue(self) -> None:
         os.environ.pop("METEOBLUE_API_KEY")
         async with self.make_csc(
@@ -130,11 +180,14 @@ class WeatherForecastCSCTestCase(salobj.BaseCscTestCase, unittest.IsolatedAsynci
             config_dir=TEST_CONFIG_DIR,
             override="disable_meteoblue.yaml",
         ):
-            hourly = await self.assert_next_sample(topic=self.remote.tel_hourlyTrend, timeout=TIMEOUT)
-            assert len(hourly.timestamp) == weatherforecast.GUARANTEED_HOURLY_TREND_LENGTH
-            assert hourly.timestamp[1] - hourly.timestamp[0] == approx(3600)
-            assert math.isfinite(hourly.temperature[1])
-            assert math.isnan(hourly.temperature[-1])
+            prediction = await self.assert_next_sample(topic=self.remote.tel_nbeats, timeout=TIMEOUT)
+            assert len(prediction.timestamp) == 26
+            assert prediction.timestamp[1] - prediction.timestamp[0] == approx(1800)
+            assert prediction.temperature == approx(list(range(1, 27)))
+            assert all(math.isfinite(timestamp) for timestamp in prediction.timestamp)
+            for topic in (self.remote.tel_hourlyTrend, self.remote.tel_dailyTrend):
+                with self.assertRaises(asyncio.TimeoutError):
+                    await topic.next(flush=False, timeout=0.2)
 
     async def test_prediction_http_failure_faults_csc(self) -> None:
         async with self.make_csc(
@@ -152,10 +205,7 @@ class WeatherForecastCSCTestCase(salobj.BaseCscTestCase, unittest.IsolatedAsynci
             name2 = name.lower()
             name = re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
             if name in expected:
-                if name == "temperature":
-                    pass
-                else:
-                    assert values[:length] == approx(expected[name][:length])
+                assert values[:length] == approx(expected[name][:length])
             elif name == "timestamp":
                 converted_timestamps = [
                     datetime.datetime.strptime(timestamp, "%Y-%m-%d %H:%M")
@@ -205,24 +255,10 @@ class WeatherForecastCSCTestCase(salobj.BaseCscTestCase, unittest.IsolatedAsynci
                 weatherforecast.GUARANTEED_HOURLY_TREND_LENGTH,
             )
 
-            prediction = await self.assert_next_sample(topic=self.remote.tel_hourlyTrend, timeout=TIMEOUT)
-            assert prediction.timestamp[0] == approx(hourly_trend.timestamp[0])
-            assert math.isnan(prediction.temperature[0])
-            assert prediction.temperature[1] == approx(2.0)
-            assert math.isnan(prediction.temperature[14])
-
-            assert self.csc.mock_server is not None
-            times = self.csc.mock_server.response["trend_1h"]["time"]
-            self.csc.mock_server.response["trend_1h"]["time"] = [
-                (datetime.datetime.strptime(time, "%Y-%m-%d %H:%M") + datetime.timedelta(hours=1)).strftime(
-                    "%Y-%m-%d %H:%M"
-                )
-                for time in times
-            ]
-            await self.csc.write_data()
-            refreshed = await self.assert_next_sample(topic=self.remote.tel_hourlyTrend, timeout=TIMEOUT)
-            assert refreshed.timestamp[0] == approx(prediction.timestamp[1])
-            assert refreshed.temperature[0] == approx(2.0)
+            prediction = await self.assert_next_sample(topic=self.remote.tel_nbeats, timeout=TIMEOUT)
+            start = self.csc.convert_time(hourly_trend_fld["time"][0])
+            assert prediction.timestamp == approx([start + 1800 * index for index in range(1, 27)])
+            assert prediction.temperature == approx(list(range(1, 27)))
 
             daily_trend_fld = df["trend_day"]
             self.check_arrays(

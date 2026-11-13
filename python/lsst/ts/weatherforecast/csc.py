@@ -28,7 +28,6 @@ __all__ = [
 ]
 
 import asyncio
-import bisect
 import datetime
 import math
 import os
@@ -54,6 +53,7 @@ SITE_URL: str = "https://my.meteoblue.com"
 FORMAT: str = "json"
 REQUEST_URL: str = "/packages/trendpro-1h_trendpro-day"
 PREDICTION_URL: str = "/weathernbeats/forecast"
+NBEATS_LENGTH: int = 26
 COUNT_HOURLY: int = 382
 COUNT_DAILY: int = 15
 GUARANTEED_HOURLY_TREND_LENGTH: int = 336
@@ -138,10 +138,6 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
         self.first_time: bool = True
         self.api_key: str | None = os.getenv("METEOBLUE_API_KEY")
         self.weathernbeats_url = os.getenv("WEATHERNBEATS_URL")
-        self.hourly_timestamps: list[float] = []
-        self.forecast_curve: list[tuple[float, float]] = []
-        self.hourly_ready = asyncio.Event()
-        self.hourly_lock = asyncio.Lock()
         self.disable_meteoblue = False
 
     @staticmethod
@@ -211,10 +207,10 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
 
     @staticmethod
     def parse_curve(body: dict[str, Any]) -> list[tuple[float, float]]:
-        """Validate a service response for interpolation."""
+        """Validate the native 26-point service curve."""
         rows = body["curve"]
-        if not isinstance(rows, list) or len(rows) < 2:
-            raise ValueError("Forecast curve must contain at least two points.")
+        if not isinstance(rows, list) or len(rows) != NBEATS_LENGTH:
+            raise ValueError("Forecast curve must contain exactly 26 points.")
         curve: list[tuple[float, float]] = []
         for row in rows:
             time = datetime.datetime.fromisoformat(row["time"])
@@ -229,50 +225,16 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
             curve.append((timestamp, temperature))
         return curve
 
-    @staticmethod
-    def temperatures_at_times(curve: list[tuple[float, float]], timestamps: list[float]) -> list[float]:
-        """Interpolate within the curve and leave other hours unavailable."""
-        times = [point[0] for point in curve]
-        temperatures = []
-        for timestamp in timestamps:
-            if not curve or timestamp < times[0] or timestamp > times[-1]:
-                temperatures.append(math.nan)
-                continue
-            right = bisect.bisect_left(times, timestamp)
-            if times[right] == timestamp:
-                temperatures.append(curve[right][1])
-            else:
-                left = right - 1
-                fraction = (timestamp - times[left]) / (times[right] - times[left])
-                temperatures.append(curve[left][1] + fraction * (curve[right][1] - curve[left][1]))
-        return temperatures
-
-    @staticmethod
-    def current_hourly_timestamps() -> list[float]:
-        """Build a UTC hourly grid when Meteoblue is disabled."""
-        now = datetime.datetime.now(datetime.timezone.utc).replace(minute=0, second=0, microsecond=0)
-        start = now.timestamp()
-        return [start + 3600 * index for index in range(GUARANTEED_HOURLY_TREND_LENGTH)]
-
     async def prediction_loop(self) -> None:
         """Generate a prediction every x seconds."""
         while True:
             try:
                 curve = await self.make_prediction()
-                if not self.disable_meteoblue:
-                    await self.hourly_ready.wait()
-                async with self.hourly_lock:
-                    self.forecast_curve = curve
-                    if self.disable_meteoblue:
-                        self.hourly_timestamps = self.current_hourly_timestamps()
-                        await self.tel_hourlyTrend.set_write(
-                            timestamp=self.hourly_timestamps,
-                            temperature=self.temperatures_at_times(curve, self.hourly_timestamps),
-                        )
-                    else:
-                        await self.tel_hourlyTrend.set_write(
-                            temperature=self.temperatures_at_times(curve, self.hourly_timestamps)
-                        )
+                if hasattr(self, "tel_nbeats"):
+                    await self.tel_nbeats.set_write(
+                        timestamp=[point[0] for point in curve],
+                        temperature=[point[1] for point in curve],
+                    )
             except Exception:
                 self.log.exception("Failed to make prediction.")
                 await self.fault(
@@ -301,40 +263,37 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
             modelrunUpdatetime=str(modelrun_updatetime_utc),
         )
 
-        async with self.hourly_lock:
-            self.hourly_timestamps = trend_hourly_fld["time"]
-            await self.tel_hourlyTrend.set_write(
-                timestamp=trend_hourly_fld["time"],
-                temperature=self.temperatures_at_times(self.forecast_curve, self.hourly_timestamps),
-                temperatureSpread=trend_hourly_fld["temperature_spread"],
-                precipitation=trend_hourly_fld["precipitation"],
-                precipitationSpread=trend_hourly_fld["precipitation_spread"],
-                windspeed=trend_hourly_fld["windspeed"],
-                windspeedSpread=trend_hourly_fld["windspeed_spread"],
-                windDirection=trend_hourly_fld["winddirection"],
-                seaLevelPressure=trend_hourly_fld["sealevelpressure"],
-                relativeHumidity=trend_hourly_fld["relativehumidity"],
-                ghiBackwards=trend_hourly_fld["ghi_backwards"],
-                extraTerrestrialRadiationBackwards=trend_hourly_fld["extraterrestrialradiation_backwards"],
-                totalCloudCover=trend_hourly_fld["totalcloudcover"],
-                totalCloudCoverSpread=trend_hourly_fld["totalcloudcover_spread"],
-                snowFraction=trend_hourly_fld["snowfraction"],
-                pictocode=trend_hourly_fld["pictocode"],
-                gust=trend_hourly_fld["gust"],
-                lowClouds=trend_hourly_fld["lowclouds"],
-                midClouds=trend_hourly_fld["midclouds"],
-                highClouds=trend_hourly_fld["highclouds"],
-                sunshineTime=trend_hourly_fld["sunshinetime"],
-                visibility=trend_hourly_fld["visibility"],
-                skinTemperature=trend_hourly_fld["skintemperature"],
-                dewPointTemperature=trend_hourly_fld["dewpointtemperature"],
-                precipitationProbability=trend_hourly_fld["precipitation_probability"],
-                cape=trend_hourly_fld["cape"],
-                liftedIndex=trend_hourly_fld["liftedindex"],
-                evapoTranspiration=trend_hourly_fld["evapotranspiration"],
-                referenceEvapoTranspirationFao=trend_hourly_fld["referenceevapotranspiration_fao"],
-            )
-            self.hourly_ready.set()
+        await self.tel_hourlyTrend.set_write(
+            timestamp=trend_hourly_fld["time"],
+            temperature=trend_hourly_fld["temperature"],
+            temperatureSpread=trend_hourly_fld["temperature_spread"],
+            precipitation=trend_hourly_fld["precipitation"],
+            precipitationSpread=trend_hourly_fld["precipitation_spread"],
+            windspeed=trend_hourly_fld["windspeed"],
+            windspeedSpread=trend_hourly_fld["windspeed_spread"],
+            windDirection=trend_hourly_fld["winddirection"],
+            seaLevelPressure=trend_hourly_fld["sealevelpressure"],
+            relativeHumidity=trend_hourly_fld["relativehumidity"],
+            ghiBackwards=trend_hourly_fld["ghi_backwards"],
+            extraTerrestrialRadiationBackwards=trend_hourly_fld["extraterrestrialradiation_backwards"],
+            totalCloudCover=trend_hourly_fld["totalcloudcover"],
+            totalCloudCoverSpread=trend_hourly_fld["totalcloudcover_spread"],
+            snowFraction=trend_hourly_fld["snowfraction"],
+            pictocode=trend_hourly_fld["pictocode"],
+            gust=trend_hourly_fld["gust"],
+            lowClouds=trend_hourly_fld["lowclouds"],
+            midClouds=trend_hourly_fld["midclouds"],
+            highClouds=trend_hourly_fld["highclouds"],
+            sunshineTime=trend_hourly_fld["sunshinetime"],
+            visibility=trend_hourly_fld["visibility"],
+            skinTemperature=trend_hourly_fld["skintemperature"],
+            dewPointTemperature=trend_hourly_fld["dewpointtemperature"],
+            precipitationProbability=trend_hourly_fld["precipitation_probability"],
+            cape=trend_hourly_fld["cape"],
+            liftedIndex=trend_hourly_fld["liftedindex"],
+            evapoTranspiration=trend_hourly_fld["evapotranspiration"],
+            referenceEvapoTranspirationFao=trend_hourly_fld["referenceevapotranspiration_fao"],
+        )
         await self.tel_dailyTrend.set_write(
             timestamp=trend_daily_fld["time"],
             pictocode=trend_daily_fld["pictocode"],
@@ -495,9 +454,6 @@ class WeatherForecastCSC(salobj.ConfigurableCsc):
         else:
             self.telemetry_task.cancel()
             self.prediction_task.cancel()
-            self.hourly_ready.clear()
-            self.hourly_timestamps = []
-            self.forecast_curve = []
             if self.mock_server is not None:
                 server = self.mock_server
                 self.mock_server = None

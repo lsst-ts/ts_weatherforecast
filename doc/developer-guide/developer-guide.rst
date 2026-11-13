@@ -15,12 +15,17 @@ The service uses URL parameters to configure the call to the API
 The API returns a JSON formated file which is then objectfied into a dictionary of dictionaries of arrays.
 Each field is then published as telemetry to the WeatherForecast DDS telemetry.
 
-Temperature predictions come from the ``ts_weathernbeats`` HTTP service. The
-CSC requests ``GET /weathernbeats/forecast`` every 15 minutes and interpolates
-its timestamped curve onto the Meteoblue hourly timestamps. The service covers
-about 12 hours; ``hourlyTrend.temperature`` is NaN outside that horizon. When
-Meteoblue is disabled, the CSC publishes a UTC hourly timestamp grid beginning
-at the current hour. ``temperatureSpread`` still comes from Meteoblue.
+Every 15 minutes, the CSC requests a temperature curve from the ``ts_weathernbeats`` service at ``GET /weathernbeats/forecast``.
+It publishes the service's 26 points on the ``nbeats`` topic without interpolation.
+Timestamps are Unix UTC seconds, and temperatures are in degrees Celsius.
+Service timestamps must include a timezone and increase strictly, and all temperatures must be finite.
+
+Meteoblue provides the temperatures and other fields in ``hourlyTrend`` and ``dailyTrend``.
+When Meteoblue is disabled, the CSC publishes only ``nbeats`` telemetry.
+
+Publishing ``nbeats`` requires a ``ts_xml`` version with ``WeatherForecast.nbeats`` arrays for 26 ``timestamp`` (double) and ``temperature`` (float) values.
+With older XML versions, the CSC fetches predictions but skips publishing them when ``tel_nbeats`` is unavailable.
+The Nbeats telemetry integration tests require the updated XML interface.
 
 .. _Dependencies:
 
@@ -81,7 +86,7 @@ authentication token.
 Simulator
 =========
 
-The CSC simulation server returns Meteoblue fixture data and a short
+The CSC simulation server returns Meteoblue fixture data and a 26-point
 weathernbeats-compatible temperature curve. The Meteoblue fixture is stored in
 ``forecast-test.json``.
 
